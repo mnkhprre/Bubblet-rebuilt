@@ -1,0 +1,23 @@
+ 00006400 | 00420000 | Borland C++ - Copyright 1994 Borland Intl.  hB hB hB hB     |
+ 00006440 | 00420040 |     ĞA ¤ZA ĞZA     dB                                         |
+ 00006480 | 00420080 |                                            ERROR BUBBLET_ICON H |
+ 000064C0 | 004200C0 | OB HOB HOB Bubblet! (Shareware) Direct Draw Initialisierung fehl |
+ 00006500 | 00420100 | geschlagen!                                                     |
+ 00006540 | 00420140 |     Score: %u  Bubble-Points: %u   ---   %u Bubbles selected. %u |
+ 00006580 | 00420180 |  %u %u %u %u %u %u %u %u %u %u %u Click 'Reset' to clear the dam |
+ 000065C0 | 004201C0 | n thing... %u %u %u %u %u %u %u %u %u %u %u You have a new highs |
+ 00006600 | 00420200 | core!! Game Over! Let's change something... SHAREWARE-VERSION Th |
+ 00006640 | 00420240 | is is the Shareware-Version of Bubblet. Feel free to distribute  |
+ 00006680 | 00420280 | it how ever you want! For the actual version of Bubblet visit ou |
+ 000066C0 | 004202C0 | r Homepage: www.hobsoft.de Please support the concept of Sharewa |
+ 00006700 | 00420300 | re and register Bubblet!  Click 'New' to start a new game! Bubbl |
+ 00006740 | 00420340 | et v1.0 -------------------------------------------------------- |
+ 00006780 | 00420380 | -------------------------------------------- Programming: Daniel |
+ 000067C0 | 004203C0 |  Klein Copyright (c) 1999 by House of Bytes Software All rights  |
+ 00006800 | 00420400 | reserved. ------------------------------------------------------ |
+ 00006840 | 00420440 | ---------------------------------------------- Testers: Martin B |
+ 00006880 | 00420480 | oese, Markus Jakubasch, Christian Heinen Original game created b |
+ 000068C0 | 004204C0 | y Frank Fejes (www.oopdreams.com) Greetings to: Heidi Amling, Da |
+ 00006900 | 00420500 | niel Gerber, Peter Gladigau, Alexander Hegener, Jörg Heil, Sebas |
+ 00006940 | 00420540 | tian Jude, Tobias Pohl, Hendrik Pütz, Tyrell, Nico, Björn, Nina, |
+ 00006980 | 00420580 |  Eva and Peter Weber -- hey-ho Holland! :-) The creators of Bubb |
