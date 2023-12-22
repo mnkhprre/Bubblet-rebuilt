@@ -1,9 +1,8 @@
-#include <winsdk-10/Windows.h>
-#include <winsdk-10/winapifamily.h>
-#include <winsdk-10/windef.h>
-#include <winsdk-10/wingdi.h>
+#include <winsdk-xp/Windows.h>
+#include <winsdk-xp/windef.h>
+#include <winsdk-xp/wingdi.h>
 
-void ShowTextCenter(int param_1, int param_2, int param_3, int *param_4, int param_5, int param_6, const uint16_t * param_7, COLORREF param_8)
+void ShowTextCenter(int param_1, int param_2,  HDC param_3, int *param_4, int param_5, int param_6, LPCSTR* param_7, COLORREF param_8)
 
 {
     int c;
@@ -13,17 +12,17 @@ void ShowTextCenter(int param_1, int param_2, int param_3, int *param_4, int par
     SetBkColor(param_3, 1);
     SetTextColor(param_3, param_8);
     SetTextAlign(param_3, 6);
-    c = lstrlenA(param_7);
-    int TextOutA( param_3, param_5, param_6, param_7, c);
+    c = lstrlenA(*param_7);
+    TextOutA( param_3, param_5, param_6, *param_7, c);
     (**(code **)(*param_4 + 0x68))();
     return;
 }
-void  ShowText(int param_1, int param_2, int param_3, int *param_4, int param_5, int param_6, const uint16_t * param_7, COLORREF param_8)
+void  ShowText(int param_1, int param_2, HDC param_3, int *param_4, int param_5, int param_6, LPCSTR param_7, COLORREF param_8)
 
 {
     int c;
 
-    (**(code **)(*param_4 + 0x44))();
+    (**(code**)(*param_4 + 0x44))();
     SetBkMode(param_3, 1);
     SetBkColor(param_3, 1);
     SetTextColor(param_3, param_8);
@@ -33,16 +32,16 @@ void  ShowText(int param_1, int param_2, int param_3, int *param_4, int param_5,
     (**(code **)(*param_4 + 0x68))();
     return;
 }
-bool  mci_OpenWave(int param_1, int param_2, int param_3, int param_4, int param_5)
+int  mci_OpenWave(int param_1, int param_2, int param_3, int param_4, int param_5, char aOpenSTypeWavea)
 
 {
     CHAR local_104[256];
 
-    wsprintfA(local_104, s_open__s_type_waveaudio_alias__s_00420a2c, param_4, param_5);
-    mci_LastError = mciSendStringA(local_104, (uint16_t *)0x0, 0, (HWND)0x0);
-    return mci_LastError == 0;
+    wsprintfA(local_104,  aOpenSTypeWavea[0],   param_4, param_5);
+    mci_LastError = mciSendString(local_104, (uint16_t *)0x0, 0, (HWND)0x0);
+    return  mci_LastError == 0;
 }
-bool  mci_PlayWave(int param_1, int param_2, int param_3, int param_4)
+int mci_PlayWave(int param_1, int param_2, int param_3, int param_4)
 
 {
     CHAR local_104[256];
@@ -51,12 +50,12 @@ bool  mci_PlayWave(int param_1, int param_2, int param_3, int param_4)
     mci_LastError = mciSendStringA(local_104, (uint16_t *)0x0, 0, (HWND)0x0);
     return mci_LastError == 0;
 }
-bool  mci_PlayWaveWait(int param_1, int param_2, int param_3, int param_4)
+int mci_PlayWaveWait(int param_1, int param_2, int param_3, int param_4, char aPlaySFrom0Wait)
 
 {
     CHAR local_104[256];
 
-    wsprintfA(local_104, s_play__s_from_0_wait_00420a64, param_4);
+    wsprintfA(local_104, aPlaySFrom0Wait[0], param_4);
     mci_LastError = mciSendStringA(local_104, (uint16_t *)0x0, 0, (HWND)0x0);
     return mci_LastError == 0;
 }
@@ -243,7 +242,7 @@ void mci_StopC(void)
     }
     return uVar1;
 }
-void  mci_ExecStr(int param_1, int param_2, int param_3, const uint16_t * param_4)
+void  mci_ExecStr(int param_1, int param_2, int param_3, LPCSTR * param_4)
 
 {
     mci_LastError = mciSendStringA(param_4, (uint16_t *)0x0, 0, (HWND)0x0);
@@ -256,31 +255,31 @@ void  mci_ExecStr(int param_1, int param_2, int param_3, const uint16_t * param_
 void CreateSetup(void)
 
 {
-    int in_AL;
-    int uVar1;
-    int uVar2;
-    int in_CL;
+    char in_AL;
+    uint uVar1;
+    uint uVar2;
+    HDC in_CL;
     HDC extraout_CL;
     HDC extraout_CL_00;
-    HDC extraout_ECX;
+    char extraout_ECX;
     HDC extraout_ECX_00;
     HDC extraout_ECX_01;
     HDC extraout_ECX_02;
     HDC extraout_ECX_03;
     HDC extraout_ECX_04;
     HDC extraout_ECX_05;
-    HDC pHVar3;
-    int in_DL;
+    PINT pHVar3;
+    HDC in_DL;
     HDC extraout_DL;
     HDC extraout_DL_00;
-    HDC extraout_EDX;
+    char extraout_EDX;
     HDC extraout_EDX_00;
     HDC extraout_EDX_01;
     HDC extraout_EDX_02;
     HDC extraout_EDX_03;
     HDC extraout_EDX_04;
     HDC extraout_EDX_05;
-    HDC uVar4;
+    uint uVar4;
 
     uVar1 = PutSurface(in_AL, in_DL, in_CL, 0, 0, bk_pic_0, v_screen);
     uVar1 = PutSurfaceCC(uVar1, extraout_DL, extraout_CL, 8, 6, paper_pic_0, v_screen);
@@ -948,7 +947,7 @@ void Update_Screen(void)
     PutSurfacePrimary(in_AL, in_DL, in_CL, 0, 0, v_screen);
     return;
 }
-int  DDLoadBitmap(int param_1, int param_2, int param_3, int param_4, const uint16_t * param_5)
+int  DDLoadBitmap(int param_1, int param_2, int param_3, int param_4, LPCSTR * param_5)
 
 {
     HANDLE h;
@@ -975,7 +974,7 @@ int  DDLoadBitmap(int param_1, int param_2, int param_3, int param_4, const uint
         cy = 0;
         iVar2 = 0;
         type = 0;
-        hInst = GetModuleHandleA((const uint16_t *)0x0);
+        hInst = GetModuleHandleA((LPCSTR *)0x0);
         h = LoadImageA(hInst, param_5, type, iVar2, cy, fuLoad);
     }
     if (h == (HANDLE)0x0)
@@ -999,7 +998,7 @@ int  DDLoadBitmap(int param_1, int param_2, int param_3, int param_4, const uint
     }
     return iVar2;
 }
-int  DDReLoadBitmap(int param_1, int param_2, int param_3, int param_4, const uint16_t * param_5)
+int  DDReLoadBitmap(int param_1, int param_2, int param_3, int param_4, LPCSTR * param_5)
 
 {
     HMODULE hInst;
@@ -1010,7 +1009,7 @@ int  DDReLoadBitmap(int param_1, int param_2, int param_3, int param_4, const ui
     HDC extraout_DL;
     HDC extraout_DL_00;
     char uVar2;
-    const uint16_t * name;
+    LPCSTR * name;
     UINT type;
     int iVar3;
     int cy;
@@ -1021,7 +1020,7 @@ int  DDReLoadBitmap(int param_1, int param_2, int param_3, int param_4, const ui
     iVar3 = 0;
     type = 0;
     name = param_5;
-    hInst = GetModuleHandleA((const uint16_t *)0x0);
+    hInst = GetModuleHandleA((LPCSTR *)0x0);
     ho = LoadImageA(hInst, name, type, iVar3, cy, fuLoad);
     uVar1 = extraout_CL;
     uVar2 = extraout_DL;
@@ -1381,80 +1380,80 @@ void  PutSurfaceCC(int param_1, int param_2, int param_3, int param_4, int param
     }
     return;
 }
-void  PutSurfaceClipCC(int param_1, int param_2, int param_3, int param_4, int param_5, int *param_6, int *param_7, int param_8, int param_9, int param_10, int param_11)
+
+void PutSurfaceClipCC(void)
 
 {
-    int iVar1;
-    int iVar2;
-    char local_ec[27];
-    char local_80[2];
-    int local_78;
-    int local_74;
-    tagRECT local_14;
+  int iVar1;
+  int iVar2;
+  int in_stack_00000004;
+  int in_stack_00000008;
+  int *in_stack_0000000c;
+  int *in_stack_00000010;
+  int in_stack_00000014;
+  int in_stack_00000018;
+  int in_stack_0000001c;
+  int in_stack_00000020;
+  char local_ec [27];
+  int local_80;
+  int local_78;
+  int local_74;
+  tagRECT local_14;
+  
+  _memset(&local_80,0,0x6c);
+  local_80 = 0x6c;
+  (**(code **)(*in_stack_0000000c + 0x58))();
+  _memset(local_ec,0,0x6c);
+  local_ec[0] = 0x6c;
+  (**(code **)(*in_stack_00000010 + 0x58))();
+  iVar1 = in_stack_00000004 + local_74;
+  iVar2 = in_stack_00000008 + local_78;
+  if (((in_stack_00000014 < in_stack_00000004 && in_stack_00000018 < in_stack_00000008) &&
+      iVar1 < in_stack_0000001c) && iVar2 < in_stack_00000020) {
+    SetRect(&local_14,in_stack_00000004,in_stack_00000008,local_74 + in_stack_00000004,
+            local_78 + in_stack_00000008);
+    iVar1 = (**(code **)(*in_stack_0000000c + 0x60))();
+    if (iVar1 == -0x7789fe3e) {
+      PostMessageA(hWnd_00421e58,9999,0,0);
+    }
+    iVar1 = (**(code **)(*in_stack_00000010 + 0x60))();
+    if (iVar1 == -0x7789fe3e) {
+      PostMessageA(hWnd_00421e58,9999,0,0);
+    }
+    iVar1 = (**(code **)(*in_stack_00000010 + 0x14))();
+  }
+  else {
+    SetRect(&local_14,in_stack_00000004,in_stack_00000008,local_74 + in_stack_00000004,
+            local_78 + in_stack_00000008);
+    if (in_stack_00000004 < in_stack_00000014) {
+      local_14.left = local_14.left + (in_stack_00000014 - in_stack_00000004);
+    }
+    if (in_stack_00000008 < in_stack_00000018) {
+      local_14.top = local_14.top + (in_stack_00000018 - in_stack_00000008);
+    }
+    if (in_stack_0000001c < iVar1) {
+      local_14.right = local_14.right - (iVar1 - in_stack_0000001c);
+    }
+    if (in_stack_00000020 < iVar2) {
+      local_14.bottom = local_14.bottom - (iVar2 - in_stack_00000020);
+    }
+    iVar1 = (**(code **)(*in_stack_0000000c + 0x60))();
+    if (iVar1 == -0x7789fe3e) {
+      PostMessageA(hWnd_00421e58,9999,0,0);
+    }
+    iVar1 = (**(code **)(*in_stack_00000010 + 0x60))();
+    if (iVar1 == -0x7789fe3e) {
+      PostMessageA(hWnd_00421e58,9999,0,0);
+    }
+    iVar1 = (**(code **)(*in_stack_00000010 + 0x14))();
+  }
+  if (iVar1 == -0x7ff8ffa9) {
+    Beep(1000,100);
+  }
+  return;
+}
 
-    _memset(local_80, 0, 0x6c);
-    local_80[0] = 0x6c;
-    (**(code **)(*param_6 + 0x58))();
-    _memset(local_ec, 0, 0x6c);
-    local_ec[0] = 0x6c;
-    (**(code **)(*param_7 + 0x58))();
-    iVar1 = param_4 + local_74;
-    iVar2 = param_5 + local_78;
-    if (((param_8 < param_4 && param_9 < param_5) && iVar1 < param_10) && iVar2 < param_11)
-    {
-        SetRect(local_14, param_4, param_5, local_74 + param_4, local_78 + param_5);
-        iVar1 = (**(code **)(*param_6 + 0x60))();
-        if (iVar1 == -0x7789fe3e)
-        {
-            PostMessageA(main_hWnd, 9999, 0, 0);
-        }
-        iVar1 = (**(code **)(*param_7 + 0x60))();
-        if (iVar1 == -0x7789fe3e)
-        {
-            PostMessageA(main_hWnd, 9999, 0, 0);
-        }
-        iVar1 = (**(code **)(*param_7 + 0x14))();
-    }
-    else
-    {
-        SetRect(&local_14, param_4, param_5, local_74 + param_4, local_78 + param_5);
-        if (param_4 < param_8)
-        {
-            local_14.left = local_14.left + (param_8 - param_4);
-        }
-        if (param_5 < param_9)
-        {
-            local_14.top = local_14.top + (param_9 - param_5);
-        }
-        if (param_10 < iVar1)
-        {
-            local_14.right = local_14.right - (iVar1 - param_10);
-        }
-        if (param_11 < iVar2)
-        {
-            local_14.bottom = local_14.bottom - (iVar2 - param_11);
-        }
-        iVar1 = (**(code **)(*param_6 + 0x60))();
-        if (iVar1 == -0x7789fe3e)
-        {
-            PostMessageA(main_hWnd, 9999, 0, 0);
-        }
-        iVar1 = (**(code **)(*param_7 + 0x60))();
-        if (iVar1 == -0x7789fe3e)
-        {
-            PostMessageA(hWnd_00421e58, 9999, 0, 0);
-        }
-        iVar1 = (**(code **)(*param_7 + 0x14))();
-    }
-    if (iVar1 == -0x7ff8ffa9)
-    {
-        Beep(1000, 100);
-    }
-    return;
-}
-void  PutSurfaceClipCC(int param_1, int param_2, int param_3, int param_4, int param_5, int *param_6, int *param_7, int param_8, int param_9, int param_10, int param_11)
-{
-}
+
 void  Fill_Rows(int param_1, int param_2, int param_3, int param_4)
 
 {
@@ -1524,7 +1523,7 @@ void  DirectDrawInit(int param_1, int param_2, int param_3, HINSTANCE param_4, i
     local_2c.cbWndExtra = 0;
     local_2c.hInstance = param_4;
     local_2c.hIcon = LoadIconA(param_4, s_BUBBLET_ICON_004200b2);
-    local_2c.hCursor = LoadCursorA(param_4, (const uint16_t *)0x2);
+    local_2c.hCursor = LoadCursorA(param_4, (LPCSTR *)0x2);
     local_2c.hbrBackground = (HBRUSH)0x0;
     local_2c.lpszMenuName = &DAT_004200bf;
     local_2c.lpszClassName = &DAT_004200c3;
@@ -2455,20 +2454,27 @@ void  SetColorKey(int param_1, int param_2, int param_3, int *param_4, int param
     (**(code **)(*param_4 + 0x74))();
     return;
 }
-void  Move_Bubble(int param_1, int param_2, int param_3, int param_4, int param_5, int param_6, int param_7)
+void Move_Bubble(char param_1, undefined param_2, undefined param_3, int param_4, int param_5, int param_6, int param_7)
+
 {
-    (PlayField_0)[param_4 * 0x2a + param_5 * 6] = (PlayField_0)[param_6 * 0x2a + param_7 * 6];
-    (&DAT_00421f08)[param_4 * 0x2a + param_5 * 6] = (&DAT_00421f08)[param_6 * 0x2a + param_7 * 6];
-    (&DAT_00421f0c)[param_4 * 0x2a + param_5 * 6] = (&DAT_00421f0c)[param_6 * 0x2a + param_7 * 6];
-    (&DAT_00421f10)[param_4 * 0x2a + param_5 * 6] = (&DAT_00421f10)[param_6 * 0x2a + param_7 * 6];
-    (&DAT_00421f14)[param_4 * 0x2a + param_5 * 6] = (&DAT_00421f14)[param_6 * 0x2a + param_7 * 6];
-    (Check_Bubble)[param_4 * 0x2a + param_5 * 6] = (Check_Bubble)[param_6 * 0x2a + param_7 * 6];
-    (PlayField_0)[param_6 * 0x2a + param_7 * 6] = 0;
-    (&DAT_00421f08)[param_6 * 0x2a + param_7 * 6] = 0xffff;
-    (&DAT_00421f0c)[param_6 * 0x2a + param_7 * 6] = 0xffff;
-    (&DAT_00421f10)[param_6 * 0x2a + param_7 * 6] = 0xffffffff;
-    (&DAT_00421f14)[param_6 * 0x2a + param_7 * 6] = 0xffffffff;
-    (Check_Bubble)[param_6 * 0x2a + param_7 * 6] = 0;
+    (&PlayField_0)[param_4 * 0x2a + param_5 * 6] =
+        (&PlayField_0)[param_6 * 0x2a + param_7 * 6];
+    (&PlayField_1)[param_4 * 0x2a + param_5 * 6] =
+        (&PlayField_1)[param_6 * 0x2a + param_7 * 6];
+    (&PlayField_2)[param_4 * 0x2a + param_5 * 6] =
+        (&PlayField_2)[param_6 * 0x2a + param_7 * 6];
+    (&PlayField_3)[param_4 * 0x2a + param_5 * 6] =
+        (&PlayField_3)[param_6 * 0x2a + param_7 * 6];
+    (&PlayField_4)[param_4 * 0x2a + param_5 * 6] =
+        (&PlayField_4)[param_6 * 0x2a + param_7 * 6];
+    (&PlayField_5)[param_4 * 0x2a + param_5 * 6] =
+        (&PlayField_5)[param_6 * 0x2a + param_7 * 6];
+    (&PlayField_0)[param_6 * 0x2a + param_7 * 6] = 0;
+    (&PlayField_1)[param_6 * 0x2a + param_7 * 6] = 0xffff;
+    (&PlayField_2)[param_6 * 0x2a + param_7 * 6] = 0xffff;
+    (&PlayField_3)[param_6 * 0x2a + param_7 * 6] = 0xffffffff;
+    (&PlayField_4)[param_6 * 0x2a + param_7 * 6] = 0xffffffff;
+    (&PlayField_5)[param_6 * 0x2a + param_7 * 6] = 0;
     return;
 }
 void heck_all_bubbles_moved(void)
@@ -3673,7 +3679,7 @@ void  Game_Message(int param_1, int param_2, int param_3, int param_4,int param_
     change_mode(0, param_2, param_3, 9);
     return;
 }
-void  Error_Message(int param_1, int param_2, int param_3, const uint16_t * param_4)
+void  Error_Message(int param_1, int param_2, int param_3, LPCSTR * param_4)
 
 {
     MessageBoxA((HWND)0x0, param_4, s_ERROR_004200ac, 0);
@@ -3713,7 +3719,7 @@ void uint(void)
 {
     int in_AL;
     int uVar1;
-    const uint16_t * pCVar2;
+    LPCSTR * pCVar2;
     int uVar3;
     int uVar4;
     char *pcVar5;
@@ -4073,7 +4079,7 @@ void __ExceptInit(int param_1, int param_2, int param_3, int param_4)
         if (DAT_00420058 != '\0')
         {
             pFVar1 = (FARPROC)0x0;
-            hModule = GetModuleHandleA((const uint16_t *)0x0);
+            hModule = GetModuleHandleA((LPCSTR *)0x0);
             param_3 = extraout_CL;
             param_2 = extraout_DL;
             if (hModule != (HMODULE)0x0)
