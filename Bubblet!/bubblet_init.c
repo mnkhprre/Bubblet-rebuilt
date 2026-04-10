@@ -31,8 +31,9 @@ BOOL Game_Init(void) {
   paper_pic_0 = HAL_LoadResource(102);
   setup_map_pic_0 = HAL_LoadResource(106);
   checked_box_pic_0 = HAL_LoadResource(107);
-  watermark_pic_0 = HAL_LoadResource(105);
+  watermark_pic_0 = HAL_LoadResource(128); // Standard watermark
   statistics_bg_pic_0 = HAL_LoadResource(104);
+  gameover_labels_pic_0 = HAL_LoadResource(105);
   pic_0 = HAL_LoadResource(103); // Correct high-res logo ID instead of 128
 
   // Initialize Buttons — CONFIRMED resource IDs from Diagnostic Mode:
@@ -56,9 +57,13 @@ BOOL Game_Init(void) {
   SetupButton(8, 181, 292, 120, 121, MODE_HIGHSCORES); // 120 = OK
   SetupButton(9, 253, 292, 124, 125, MODE_HIGHSCORES); // 124 = Reset
 
+  // Gameover paper buttons (Done and New)
+  SetupButton(16, 178, 292, 122, 123, MODE_GAMEOVER); // 122 = Done
+  SetupButton(17, 245, 292, 116, 117, MODE_GAMEOVER); // 116 = New
+
   // Info screen paper buttons (OK = 120)
   SetupButton(10, 215, 277, 120, 121, MODE_HELP);          // OK
-  SetupButton(11, 215, 277, 120, 121, MODE_CREDITS);       // OK
+  SetupButton(11, 180, 277, 120, 121, MODE_CREDITS);       // OK
   SetupButton(12, 215, 230, 120, 121, MODE_UNDO_INFO);     // OK
   SetupButton(13, 215, 275, 120, 121, MODE_REGISTER_INFO); // Centered OK
 
@@ -68,7 +73,7 @@ BOOL Game_Init(void) {
   // OK button for Setup screen
   SetupButton(15, 215, 275, 120, 121, MODE_SETUP); // 120 = OK
 
-  button_ctr_0 = 16;
+  button_ctr_0 = 18;
 
   // Start with a new game ready (logic-wise)
   New_Game();

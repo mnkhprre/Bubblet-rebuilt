@@ -55,6 +55,7 @@ SurfaceHandle setup_map_pic_0 = NULL;
 SurfaceHandle checked_box_pic_0 = NULL;
 SurfaceHandle watermark_pic_0 = NULL;
 SurfaceHandle statistics_bg_pic_0 = NULL;
+SurfaceHandle gameover_labels_pic_0 = NULL;
 SurfaceHandle bubble_pics[5] = {NULL};
 
 // Sound

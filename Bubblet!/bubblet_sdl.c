@@ -234,10 +234,14 @@ void HAL_ProcessEvents(void) {
     if (e.type == SDL_QUIT) {
       exit(0);
     } else if (e.type == SDL_MOUSEBUTTONDOWN) {
+      printf("[INPUT] Mouse DOWN at X=%d, Y=%d\n", e.button.x, e.button.y);
       Check_Button_Down(e.button.x, e.button.y);
     } else if (e.type == SDL_MOUSEBUTTONUP) {
+      printf("[INPUT] Mouse UP at X=%d, Y=%d\n", e.button.x, e.button.y);
       Check_Button_Up(e.button.x, e.button.y);
     } else if (e.type == SDL_MOUSEMOTION) {
+      // Uncomment the line below to also log mouse movements (can be very verbose)
+      // printf("[INPUT] Mouse MOVE to X=%d, Y=%d\n", e.motion.x, e.motion.y);
       Check_Button_Move(e.motion.x, e.motion.y);
     }
   }

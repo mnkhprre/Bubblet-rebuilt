@@ -53,6 +53,7 @@ extern SurfaceHandle setup_map_pic_0;     // 00420C84
 extern SurfaceHandle checked_box_pic_0;   // 00420C88
 extern SurfaceHandle watermark_pic_0;
 extern SurfaceHandle statistics_bg_pic_0;
+extern SurfaceHandle gameover_labels_pic_0;
 extern SurfaceHandle bubble_pics[5];      // 00421E90
 
 // Buttons

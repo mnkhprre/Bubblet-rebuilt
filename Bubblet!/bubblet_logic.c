@@ -313,7 +313,7 @@ void Check_End_Game(void) {
         // Persist to disk
         Save_Config();
         
-        mode_0 = MODE_HIGHSCORES;
+        mode_0 = MODE_GAMEOVER;
         animations_active = FALSE; 
         Create_Screen();
     }
@@ -408,7 +408,7 @@ void Execute_Button(int buttonIndex) {
             if (mode_0 == MODE_PLAY) {
                 HAL_PlaySound("Score");
                 Check_End_Game();
-                if (mode_0 == MODE_PLAY) mode_0 = MODE_HIGHSCORES;
+                if (mode_0 == MODE_PLAY) mode_0 = MODE_GAMEOVER;
             }
             break;
         case 5: // "Undo"
@@ -430,6 +430,13 @@ void Execute_Button(int buttonIndex) {
         case 6: // "Menu" (Returns to intro)
         case 8: // "Done" (from Scoreboard)
             mode_0 = MODE_INTRO;
+            break;
+        case 16: // "Done" (from GameOver)
+            mode_0 = MODE_INTRO;
+            break;
+        case 17: // "New" (from GameOver)
+            New_Game();
+            mode_0 = MODE_PLAY;
             break;
         case 9: // "Reset" (from Statistics)
             if (mode_0 == MODE_HIGHSCORES) {

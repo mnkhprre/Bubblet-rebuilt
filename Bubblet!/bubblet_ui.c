@@ -158,7 +158,9 @@ void Create_Screen(void) {
 
   switch (mode_0) {
   case MODE_INTRO:
-    HAL_DrawSurface(pic_0, NULL, 50, 40, TRUE);
+    HAL_DrawSurface(pic_0, NULL, 12, 40, TRUE);
+    // Draw SHAREWARE-VERSION text under the exclamation mark
+    ShowText(NULL, 267, 145, "SHAREWARE-VERSION", 0xFFFFFF);
 
     // Shareware Text Block (Centered)
     ShowTextCenter(NULL, 246, 160, "This is the Shareware-Version of Bubblet.",
@@ -199,6 +201,34 @@ void Create_Screen(void) {
     ShowText(NULL, 15, 345, "Let's change something...", 0xFFFFFF);
     Draw_Buttons();
     break;
+  case MODE_GAMEOVER: {
+    HAL_DrawSurface(paper_pic_0, NULL, 8, 6, TRUE);
+    HAL_DrawSurface(gameover_labels_pic_0, NULL, 110, 45, TRUE); // Label block
+    
+    char buf[64];
+    int modeIdx = setup_data_0;
+    if (modeIdx < 0 || modeIdx > 3) modeIdx = 0;
+    
+    sprintf(buf, "%d", current_game_score);
+    ShowText(NULL, 340, 115, buf, 0x000000);
+    
+    sprintf(buf, "%d", bubble_bonus_0);
+    ShowText(NULL, 340, 147, buf, 0x000000);
+    
+    sprintf(buf, "%d", last_total_score_0);
+    ShowText(NULL, 340, 179, buf, 0x000000);
+    
+    sprintf(buf, "%d", average_score_0[modeIdx]);
+    ShowText(NULL, 340, 211, buf, 0x000000);
+    
+    sprintf(buf, "%d", games_played_0[modeIdx]);
+    ShowText(NULL, 340, 243, buf, 0x000000);
+    
+    // Status Bar
+    ShowText(NULL, 15, 345, "Game Over!", 0xFFFFFF);
+    Draw_Buttons();
+    break;
+  }
   case MODE_HIGHSCORES:
     HAL_DrawSurface(paper_pic_0, NULL, 8, 6, TRUE);
 
@@ -252,10 +282,10 @@ void Create_Screen(void) {
              "Greetings: Heidi Amling, Daniel Gerber, Peter Gladigau,",
              0x000000);
     ShowText(NULL, 50, 120,
-             "Alexander Hegener, Jörg Heil, Sebastian Jude, Tobias Pohl,",
+             "Alexander Hegener, Joerg Heil, Sebastian Jude, Tobias Pohl,",
              0x000000);
     ShowText(NULL, 50, 135,
-             "Hendrik Pütz, Tyrell, Nico, Björn, Nina, Eva and Peter Weber",
+             "Hendrik Pueltz, Tyrell, Nico, Bjoern, Nina, Eva and Peter Weber",
              0x000000);
 
     HAL_DrawLine(NULL, 160, 155, 330, 155, 0x000000);
