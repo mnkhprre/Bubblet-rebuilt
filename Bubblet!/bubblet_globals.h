@@ -51,6 +51,8 @@ extern SurfaceHandle paper_pic_0;         // 00420C74
 extern SurfaceHandle paper_x_pic_0;       // 00420C78
 extern SurfaceHandle setup_map_pic_0;     // 00420C84
 extern SurfaceHandle checked_box_pic_0;   // 00420C88
+extern SurfaceHandle watermark_pic_0;
+extern SurfaceHandle statistics_bg_pic_0;
 extern SurfaceHandle bubble_pics[5];      // 00421E90
 
 // Buttons
@@ -65,12 +67,13 @@ extern BOOL game_initialized;
 extern int sound_enabled_0;         // 00420138?
 extern int animations_enabled_0;    // 0042013c?
 
-// Score Tracking
-extern int games_played_0;
+// Score Tracking (Arrays for 4 modes)
+extern int games_played_0[4];
 extern int bubble_bonus_0;
 extern int last_total_score_0;
-extern int average_score_0;
-extern int total_score_history_0;
+extern int average_score_0[4];
+extern int high_score_0[4]; 
+extern long long total_score_history_0[4];
 extern BOOL is_new_highscore;
 
 // --- HAL (Hardware Abstraction Layer) ---
@@ -95,6 +98,9 @@ void Draw_Buttons(void);
 void Update_Bubble(void);
 void New_Game(void);
 void Undo_Move(void);
+void Save_Config(void);
+void Load_Config(void);
+void Reset_Statistics(void);
 void Check_Bubbles_Clicked(int mouseX, int mouseY);
 void Check_Button_Down(int x, int y);
 void Check_Button_Up(int x, int y);

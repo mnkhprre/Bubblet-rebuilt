@@ -27,17 +27,18 @@ int button_ctr_0 = 0;
 GameButton buttons_0[20] = {{0}};
 int pressed_button_0 = -1;
 
-// Score Tracking
-int games_played_0 = 0;
+// Score Tracking (Arrays for 4 modes: Normal, Continuous, Shifter, MegaShift)
+int games_played_0[4] = {0, 0, 0, 0};
 int bubble_bonus_0 = 0;
 int last_total_score_0 = 0;
-int average_score_0 = 0;
-int total_score_history_0 = 0;
+int average_score_0[4] = {0, 0, 0, 0};
+int high_score_0[4] = {0, 0, 0, 0};
+long long total_score_history_0[4] = {0, 0, 0, 0};
 BOOL is_new_highscore = FALSE;
 
 // Animation Offsets
-float anim_offset_x[GRID_COLS * 42 + GRID_ROWS * 6 + 1] = {0};
-float anim_offset_y[GRID_COLS * 42 + GRID_ROWS * 6 + 1] = {0};
+float anim_offset_x[512] = {0};
+float anim_offset_y[512] = {0};
 BOOL animations_active = FALSE;
 WindowHandle main_hWnd = NULL;
 
@@ -52,6 +53,8 @@ SurfaceHandle paper_pic_0 = NULL;
 SurfaceHandle paper_x_pic_0 = NULL;
 SurfaceHandle setup_map_pic_0 = NULL;
 SurfaceHandle checked_box_pic_0 = NULL;
+SurfaceHandle watermark_pic_0 = NULL;
+SurfaceHandle statistics_bg_pic_0 = NULL;
 SurfaceHandle bubble_pics[5] = {NULL};
 
 // Sound

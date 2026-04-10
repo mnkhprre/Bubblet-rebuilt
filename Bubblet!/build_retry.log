@@ -1,9 +1,0 @@
-clang -Wall -O2 `/usr/local/bin/sdl2-config --cflags` -I. -I/usr/local/include -c bubblet_main_mac.c -o bubblet_main_mac.o
-clang -Wall -O2 `/usr/local/bin/sdl2-config --cflags` -I. -I/usr/local/include -c bubblet_globals.c -o bubblet_globals.o
-clang -Wall -O2 `/usr/local/bin/sdl2-config --cflags` -I. -I/usr/local/include -c bubblet_sdl.c -o bubblet_sdl.o
-clang -Wall -O2 `/usr/local/bin/sdl2-config --cflags` -I. -I/usr/local/include -c bubblet_init.c -o bubblet_init.o
-clang -Wall -O2 `/usr/local/bin/sdl2-config --cflags` -I. -I/usr/local/include -c bubblet_input.c -o bubblet_input.o
-clang -Wall -O2 `/usr/local/bin/sdl2-config --cflags` -I. -I/usr/local/include -c bubblet_logic.c -o bubblet_logic.o
-clang -Wall -O2 `/usr/local/bin/sdl2-config --cflags` -I. -I/usr/local/include -c bubblet_sound.c -o bubblet_sound.o
-clang -Wall -O2 `/usr/local/bin/sdl2-config --cflags` -I. -I/usr/local/include -c bubblet_ui.c -o bubblet_ui.o
-clang -o bubblet_mac bubblet_main_mac.o bubblet_globals.o bubblet_sdl.o bubblet_init.o bubblet_input.o bubblet_logic.o bubblet_sound.o bubblet_ui.o `/usr/local/bin/sdl2-config --libs` -L/usr/local/lib -lSDL2_mixer -lSDL2_ttf

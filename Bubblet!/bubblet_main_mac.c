@@ -23,7 +23,7 @@ int main(int argc, char* argv[]) {
         HAL_ProcessEvents();
         
         // 1.5 Update Animations
-        Update_Animations(0.016f); // 16ms delta time approximation at 60 FPS
+        Update_Animations(0.033f); // 33ms delta time at 30 FPS
         
         // 2. Render to Backbuffer
         Create_Screen();
@@ -31,10 +31,10 @@ int main(int argc, char* argv[]) {
         // 3. Present to Screen
         HAL_Present();
         
-        // 4. Cap to 60 FPS
+        // 4. Cap to 30 FPS
         uint32_t frameTime = HAL_GetTicks() - frameStart;
-        if (frameTime < 16) {
-            SDL_Delay(16 - frameTime);
+        if (frameTime < 33) {
+            SDL_Delay(33 - frameTime);
         }
     }
 

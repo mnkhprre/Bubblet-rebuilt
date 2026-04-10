@@ -23,32 +23,57 @@ void DrawLine(int x1, int y1, int x2, int y2, COLORREF color,
 void Draw_Buttons(void) {
   for (int i = 0; i < button_ctr_0; i++) {
     GameButton *btn = &buttons_0[i];
-    // Rules for visibility:
-    // vis == 0xFF: Always visible in "Menu-like" modes (Intro, Help, Setup,
-    // Scores) vis == 0: Only in MODE_INTRO vis == 2: Only in MODE_PLAY vis ==
-    // 3: Only in MODE_SETUP vis == 4: Only in MODE_HIGHSCORES
 
-    BOOL visible = FALSE;
-    if (btn->visibilityMode == 0xFF)
-      visible = TRUE;
-    else if (btn->visibilityMode == 0 && mode_0 == MODE_INTRO)
-      visible = TRUE;
-    else if (btn->visibilityMode == MODE_PLAY && mode_0 == MODE_PLAY)
-      visible = TRUE;
-    else if (btn->visibilityMode == MODE_SETUP && mode_0 == MODE_SETUP)
-      visible = TRUE;
-    else if (btn->visibilityMode == MODE_HIGHSCORES &&
-             mode_0 == MODE_HIGHSCORES)
-      visible = TRUE;
-    else if (btn->visibilityMode == 0xF0 && mode_0 != MODE_PLAY)
-      visible = TRUE;
+    // Visibility & State Rules:
+    BOOL isDisabled = FALSE;
+    BOOL isOverlayMode = (mode_0 != MODE_INTRO && mode_0 != MODE_PLAY);
 
-    if (visible) {
-      SurfaceHandle surface =
-          btn->isPressed ? btn->lpSurfacePressed : btn->lpSurfaceNormal;
-      if (surface) {
-        HAL_DrawSurface(surface, NULL, btn->x1, btn->y1, TRUE);
-      }
+    if (btn->visibilityMode == 0xFF) {
+      // Main navigation buttons are visible but DIMMED when an overlay is
+      // active.
+      if (isOverlayMode)
+        isDisabled = TRUE;
+    } else if (btn->visibilityMode == 0xF0) {
+      // 'New' button (0xF0) is hidden in Play mode, but dimmed in overlays.
+      if (mode_0 == MODE_PLAY)
+        continue;
+      if (isOverlayMode)
+        isDisabled = TRUE;
+    } else if (btn->visibilityMode == MODE_PLAY) {
+      // Play-mode buttons (End/Undo) are ONLY visible in Play mode.
+      // Hidden entirely in overlays like Setup, Help, Scores.
+      if (mode_0 != MODE_PLAY)
+        continue;
+    } else {
+      // Menu-specific buttons (OK, Reset) must match current mode exactly.
+      if (btn->visibilityMode != (int)mode_0)
+        continue;
+    }
+
+    // Apply dimming if disabled
+    if (isDisabled) {
+      if (btn->lpSurfaceNormal)
+        SDL_SetTextureColorMod((SDL_Texture *)btn->lpSurfaceNormal, 80, 80, 80);
+      if (btn->lpSurfacePressed)
+        SDL_SetTextureColorMod((SDL_Texture *)btn->lpSurfacePressed, 80, 80,
+                               80);
+    }
+
+    // Draw the button
+    SurfaceHandle surface =
+        btn->isPressed ? btn->lpSurfacePressed : btn->lpSurfaceNormal;
+    if (surface) {
+      HAL_DrawSurface(surface, NULL, btn->x1, btn->y1, TRUE);
+    }
+
+    // Reset color mod
+    if (isDisabled) {
+      if (btn->lpSurfaceNormal)
+        SDL_SetTextureColorMod((SDL_Texture *)btn->lpSurfaceNormal, 255, 255,
+                               255);
+      if (btn->lpSurfacePressed)
+        SDL_SetTextureColorMod((SDL_Texture *)btn->lpSurfacePressed, 255, 255,
+                               255);
     }
   }
 }
@@ -66,14 +91,42 @@ void Create_Game_Screen(void) {
       if (bubbleType != 0) {
         int x = col * BUBBLE_SIZE + GRID_X_OFFSET + (int)anim_offset_x[index];
         int y = row * BUBBLE_SIZE + GRID_Y_OFFSET + (int)anim_offset_y[index];
-
-        // Show selection by shifting bubbles slightly
-        if (CheckGrid[index] == 1) {
-          x -= 2;
-          y -= 2;
-        }
-
         HAL_DrawSurface(bubble_pics[bubbleType - 1], NULL, x, y, TRUE);
+      }
+    }
+  }
+
+  // Draw red perimeter for selected bubbles
+  if (number_bubbles_marked_0 > 0) {
+    COLORREF red = RGB(255, 0, 0);
+    for (int col = 0; col < GRID_COLS; col++) {
+      for (int row = 0; row < GRID_ROWS; row++) {
+        int index = col * 42 + row * 6;
+        if (PlayField_0[index] != 0 && CheckGrid[index] == 1) {
+          int x = col * BUBBLE_SIZE + GRID_X_OFFSET + (int)anim_offset_x[index];
+          int y = row * BUBBLE_SIZE + GRID_Y_OFFSET + (int)anim_offset_y[index];
+
+          // Top edge
+          if (row == 0 || CheckGrid[col * 42 + (row - 1) * 6] == 0) {
+            HAL_DrawLine(NULL, x, y, x + BUBBLE_SIZE - 1, y, red);
+          }
+          // Bottom edge
+          if (row == GRID_ROWS - 1 ||
+              CheckGrid[col * 42 + (row + 1) * 6] == 0) {
+            HAL_DrawLine(NULL, x, y + BUBBLE_SIZE - 1, x + BUBBLE_SIZE - 1,
+                         y + BUBBLE_SIZE - 1, red);
+          }
+          // Left edge
+          if (col == 0 || CheckGrid[(col - 1) * 42 + row * 6] == 0) {
+            HAL_DrawLine(NULL, x, y, x, y + BUBBLE_SIZE - 1, red);
+          }
+          // Right edge
+          if (col == GRID_COLS - 1 ||
+              CheckGrid[(col + 1) * 42 + row * 6] == 0) {
+            HAL_DrawLine(NULL, x + BUBBLE_SIZE - 1, y, x + BUBBLE_SIZE - 1,
+                         y + BUBBLE_SIZE - 1, red);
+          }
+        }
       }
     }
   }
@@ -84,8 +137,12 @@ void Create_Game_Screen(void) {
   if (number_bubbles_marked_0 > 1) {
     points = number_bubbles_marked_0 * (number_bubbles_marked_0 - 1);
   }
-  sprintf(statusBuf, "Score: %d Bubble-Points: %d -- %d Bubbles selected.",
-          current_game_score, points, number_bubbles_marked_0);
+  const char *modeNames[] = {"Standard", "Continuous", "Shifter", "MegaShift"};
+  const char *modeName = (setup_data_0 >= 0 && setup_data_0 <= 3)
+                             ? modeNames[setup_data_0]
+                             : "Unknown";
+  sprintf(statusBuf, "Score: %d  Pts: %d  Sel: %d  [%s]", current_game_score,
+          points, number_bubbles_marked_0, modeName);
 
   // Status box area
   ShowText(NULL, 15, 345, statusBuf, 0xFFFFFF);
@@ -139,76 +196,136 @@ void Create_Screen(void) {
     if (animations_enabled_0)
       HAL_DrawSurface(checked_box_pic_0, NULL, 279, 120, TRUE);
 
+    ShowText(NULL, 15, 345, "Let's change something...", 0xFFFFFF);
     Draw_Buttons();
     break;
   case MODE_HIGHSCORES:
     HAL_DrawSurface(paper_pic_0, NULL, 8, 6, TRUE);
 
-    ShowTextCenter(NULL, 256, 50, "Your Score:", 0x000000);
+    // Draw the foundational 'base' for the score table (Bitmap 104)
+    HAL_DrawSurface(statistics_bg_pic_0, NULL, 73, 62, TRUE);
 
-    char buf[64];
-    sprintf(buf, "%d", current_game_score);
-    ShowText(NULL, 130, 100, "Game Score:", 0x000000);
-    ShowText(NULL, 300, 100, buf, 0x000000);
+    // Rows loop follows...
+    for (int i = 0; i < 4; i++) {
+      int g = games_played_0[i];
+      int a = average_score_0[i];
+      int h = high_score_0[i];
 
-    sprintf(buf, "%d", bubble_bonus_0);
-    ShowText(NULL, 130, 125, "Bubble Bonus:", 0x000000);
-    ShowText(NULL, 300, 125, buf, 0x000000);
+      char buf[32];
 
-    sprintf(buf, "%d", last_total_score_0);
-    ShowText(NULL, 130, 150, "Total Score:", 0x000000);
-    ShowText(NULL, 300, 150, buf, 0xFF0000); // Red text
+      // Games Column - Using 32px row height and 148px start Y for better
+      // alignment
+      sprintf(buf, "%d", g);
+      ShowTextCenter(NULL, 212, 148 + i * 32, buf, 0x000000);
 
-    sprintf(buf, "%d", average_score_0);
-    ShowText(NULL, 130, 175, "Average Score:", 0x000000);
-    ShowText(NULL, 300, 175, buf, 0x000000);
+      // Average Column
+      sprintf(buf, "%d", a);
+      ShowTextCenter(NULL, 292, 148 + i * 32, buf, 0x000000);
 
-    sprintf(buf, "%d", games_played_0);
-    ShowText(NULL, 130, 200, "Games Played:", 0x000000);
-    ShowText(NULL, 300, 200, buf, 0x000000);
-
-    if (is_new_highscore) {
-      ShowText(NULL, 20, 280, "You have a new highscore!!", 0xFFFFFF);
+      // High Column
+      sprintf(buf, "%d", h);
+      ShowTextCenter(NULL, 372, 148 + i * 32, buf, 0x000000);
     }
 
+    ShowText(NULL, 15, 345, "Click 'Reset' to clear the damn thing...",
+             0xFFFFFF);
     Draw_Buttons();
     break;
+
   case MODE_HELP:
     HAL_DrawSurface(paper_pic_0, NULL, 8, 6, TRUE);
-    ShowTextCenter(NULL, 256, 40, "How to Play", 0x000000);
-    ShowText(NULL, 50, 80, "The goal of Bubblet is to remove groups of",
-             0x000000);
-    ShowText(NULL, 50, 100, "identically colored bubbles. The larger the",
-             0x000000);
-    ShowText(NULL, 50, 120, "group, the more points you get!", 0x000000);
-    ShowText(NULL, 50, 150, "Click once to select a group, click again",
-             0x000000);
-    ShowText(NULL, 50, 170, "to remove it. Bubbles will fall down and",
-             0x000000);
-    ShowText(NULL, 50, 190, "collapse to the left.", 0x000000);
-    ShowTextCenter(NULL, 256, 240, "Clear the board for a big bonus!",
-                   0x000000);
 
     Draw_Buttons();
     break;
 
   case MODE_CREDITS:
-    HAL_DrawSurface(paper_pic_0, NULL, 8, 6, TRUE);
-    ShowText(NULL, 60, 40, "Bubblet v1.0", 0x000000);
-    ShowText(NULL, 60, 70, "Programming: Daniel Klein", 0x000000);
-    ShowText(NULL, 60, 90, "Copyright (c) 1999 by House of Bytes Software",
+    HAL_DrawSurface(bk_pic_0, NULL, 0, 0, FALSE);
+    HAL_DrawSurface(paper_x_pic_0, NULL, 8, 6, TRUE);
+
+    // Development Team
+    ShowText(NULL, 50, 40, "Bubblet v1.0", 0x000000);
+    HAL_DrawLine(NULL, 50, 60, 420, 60, 0x000000);
+    ShowText(NULL, 50, 75, "Programming: Daniel Klein", 0x000000);
+    ShowText(NULL, 50, 90, "Testers: M. Boese, M. Jakubasch, C. Heinen",
              0x000000);
-    ShowText(NULL, 60, 110, "All rights reserved.", 0x000000);
-    ShowText(NULL, 60, 140, "Testers: Martin Boese, Markus Jakubasch,",
+    ShowText(NULL, 50, 105,
+             "Greetings: Heidi Amling, Daniel Gerber, Peter Gladigau,",
              0x000000);
-    ShowText(NULL, 60, 160, "Christian Heinen.", 0x000000);
-    ShowText(NULL, 60, 180, "Original game by Frank Fejes (oopdreams.com)",
+    ShowText(NULL, 50, 120,
+             "Alexander Hegener, Jörg Heil, Sebastian Jude, Tobias Pohl,",
              0x000000);
-    ShowText(NULL, 60, 210, "Greetings to: Heidi Amling, Daniel Gerber,",
-             0x000000);
-    ShowText(NULL, 60, 230, "Peter Gladigau, Alexander Hegener, Jörg Heil.",
+    ShowText(NULL, 50, 135,
+             "Hendrik Pütz, Tyrell, Nico, Björn, Nina, Eva and Peter Weber",
              0x000000);
 
+    HAL_DrawLine(NULL, 160, 155, 330, 155, 0x000000);
+
+    // Registration Details
+    ShowTextCenter(NULL, 246, 170, "House of Bytes Software", 0x000000);
+    ShowTextCenter(NULL, 246, 185, "c/o Daniel Klein, Walzenrather Str. 5",
+                   0x000000);
+    ShowTextCenter(NULL, 246, 200, "53819 Neunkirchen, Germany", 0x000000);
+
+    ShowTextCenter(NULL, 246, 225, "Please include your E-Mail Address!",
+                   0x000000);
+    ShowTextCenter(NULL, 246, 240, "Registered version sent via E-Mail!",
+                   0x000000);
+    ShowTextCenter(NULL, 246, 265, "Thank you for supporting Shareware!",
+                   0x000000);
+    ShowText(NULL, 15, 345, "The creators of Bubblet...", 0xFFFFFF);
+    Draw_Buttons();
+    break;
+
+  case MODE_UNDO_INFO:
+    HAL_DrawSurface(paper_x_pic_0, NULL, 8, 6, TRUE);
+
+    ShowTextCenter(NULL, 246, 100, "Undo is the only thing that's not working",
+                   0x000000);
+    ShowTextCenter(NULL, 246, 120, "in the Shareware-Version of Bubblet! ;-)",
+                   0x000000);
+
+    ShowTextCenter(NULL, 246, 170, "Please Register!", 0x000000);
+
+    ShowText(NULL, 15, 345, "hehe...", 0xFFFFFF);
+    Draw_Buttons();
+    break;
+
+  case MODE_REGISTER_INFO:
+    HAL_DrawSurface(paper_pic_0, NULL, 8, 6, TRUE);
+    ShowTextCenter(NULL, 246, 50,
+                   "Bubblet is Shareware and costs only $10 (15DM).", 0x000000);
+    ShowTextCenter(
+        NULL, 246, 65,
+        "In order to register Bubblet send money (or Money-Order) to:",
+        0x000000);
+
+    HAL_DrawLine(NULL, 160, 80, 330, 80, 0x000000);
+
+    ShowTextCenter(NULL, 246, 85, "House of Bytes Software", 0x000000);
+    ShowTextCenter(NULL, 246, 100, "c/o Daniel Klein", 0x000000);
+    ShowTextCenter(NULL, 246, 115, "Walzenrather Str. 5", 0x000000);
+    ShowTextCenter(NULL, 246, 130, "53819 Neunkirchen", 0x000000);
+    ShowTextCenter(NULL, 246, 145, "Germany", 0x000000);
+
+    HAL_DrawLine(NULL, 160, 165, 330, 165, 0x000000);
+
+    ShowTextCenter(NULL, 246, 175, "Please include your E-Mail Address!",
+                   0x000000);
+    ShowTextCenter(NULL, 246, 190,
+                   "The registered Version will be sent to you via E-Mail!",
+                   0x000000);
+    ShowTextCenter(NULL, 246, 205,
+                   "Once registered, you're registered forever!", 0x000000);
+    ShowTextCenter(
+        NULL, 246, 220,
+        "All registered Users receive future updates directly via E-Mail!",
+        0x000000);
+
+    ShowTextCenter(NULL, 246, 250,
+                   "Thank you for supporting the concept of Shareware!",
+                   0x000000);
+
+    ShowText(NULL, 15, 345, "How to register Bubblet...", 0xFFFFFF);
     Draw_Buttons();
     break;
   default:
