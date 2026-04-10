@@ -308,6 +308,7 @@ void Check_End_Game(void) {
             HAL_PlaySound("Highscore");
         } else {
             is_new_highscore = FALSE;
+            HAL_PlaySound("Score");
         }
         
         // Persist to disk
@@ -406,9 +407,12 @@ void Execute_Button(int buttonIndex) {
             break;
         case 7: // "End" (Play Mode)
             if (mode_0 == MODE_PLAY) {
-                HAL_PlaySound("Score");
                 Check_End_Game();
-                if (mode_0 == MODE_PLAY) mode_0 = MODE_GAMEOVER;
+                if (mode_0 == MODE_PLAY) {
+                    HAL_PlaySound("Score");
+                    mode_0 = MODE_GAMEOVER;
+                    Create_Screen();
+                }
             }
             break;
         case 5: // "Undo"
