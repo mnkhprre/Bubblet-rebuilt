@@ -1,0 +1,10 @@
+Package: bubblet
+Version: 1.0-1
+Section: games
+Priority: optional
+Architecture: amd64
+Maintainer: Bubblet Maintainer <maintainer@example.com>
+Depends: libsdl2-2.0-0, libsdl2-mixer-2.0-0, libsdl2-ttf-2.0-0
+Description: Bubblet! Rebuilt
+ A classic bubble-popping game rebuilt for Linux using SDL2.
+ This is a port of the original Windows DirectDraw game.

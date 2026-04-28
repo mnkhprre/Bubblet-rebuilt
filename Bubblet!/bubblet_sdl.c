@@ -41,25 +41,30 @@ BOOL HAL_Init(void) {
 
   // Preload sounds
   sfx_Click = Mix_LoadWAV("Click.wav");
-  if (!sfx_Click) printf("[AUDIO] Failed to load Click.wav: %s\n", Mix_GetError());
-  
+  if (!sfx_Click)
+    printf("[AUDIO] Failed to load Click.wav: %s\n", Mix_GetError());
+
   sfx_Pop = Mix_LoadWAV("Pop.wav"); // Use original recording for popping
-  if (!sfx_Pop) printf("[AUDIO] Failed to load Pop.wav handle: %s\n", Mix_GetError());
-  
-  sfx_Megapop = sfx_Pop; 
-  
+  if (!sfx_Pop)
+    printf("[AUDIO] Failed to load Pop.wav handle: %s\n", Mix_GetError());
+
+  sfx_Megapop = sfx_Pop;
+
   sfx_Intro = Mix_LoadWAV("Intro.wav");
-  if (!sfx_Intro) printf("[AUDIO] Failed to load Intro.wav: %s\n", Mix_GetError());
-  
+  if (!sfx_Intro)
+    printf("[AUDIO] Failed to load Intro.wav: %s\n", Mix_GetError());
+
   sfx_Score = Mix_LoadWAV("Score.wav");
-  if (!sfx_Score) printf("[AUDIO] Failed to load Score.wav: %s\n", Mix_GetError());
-  
+  if (!sfx_Score)
+    printf("[AUDIO] Failed to load Score.wav: %s\n", Mix_GetError());
+
   sfx_Highscore = Mix_LoadWAV("Higscore.wav");
-  if (!sfx_Highscore) printf("[AUDIO] Failed to load Higscore.wav: %s\n", Mix_GetError());
-  
+  if (!sfx_Highscore)
+    printf("[AUDIO] Failed to load Higscore.wav: %s\n", Mix_GetError());
+
   sfx_Boing = Mix_LoadWAV("Boing.wav");
   if (!sfx_Boing) {
-      sfx_Boing = sfx_Intro; // Only fallback to Intro if it exists
+    sfx_Boing = sfx_Intro; // Only fallback to Intro if it exists
   }
 
   // Load a system font as fallback
@@ -240,8 +245,9 @@ void HAL_ProcessEvents(void) {
       printf("[INPUT] Mouse UP at X=%d, Y=%d\n", e.button.x, e.button.y);
       Check_Button_Up(e.button.x, e.button.y);
     } else if (e.type == SDL_MOUSEMOTION) {
-      // Uncomment the line below to also log mouse movements (can be very verbose)
-      // printf("[INPUT] Mouse MOVE to X=%d, Y=%d\n", e.motion.x, e.motion.y);
+      // Uncomment the line below to also log mouse movements (can be very
+      // verbose) printf("[INPUT] Mouse MOVE to X=%d, Y=%d\n", e.motion.x,
+      // e.motion.y);
       Check_Button_Move(e.motion.x, e.motion.y);
     }
   }
