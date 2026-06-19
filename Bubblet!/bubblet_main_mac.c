@@ -1,5 +1,7 @@
 #include "bubblet_globals.h"
 
+extern int CheckForUpdates(void);
+
 int main(int argc, char* argv[]) {
     if (!HAL_Init()) {
         printf("Failed to initialize HAL!\n");
@@ -12,6 +14,9 @@ int main(int argc, char* argv[]) {
     }
 
     HAL_PlaySound("Intro");
+
+    // Check for updates on startup (non-blocking)
+    CheckForUpdates();
 
     game_initialized = TRUE;
     

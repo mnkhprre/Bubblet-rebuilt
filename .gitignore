@@ -1,0 +1,15 @@
+# Build artifacts
+*.o
+*.tmp
+bubblet_mac
+bubblet_linux
+bubblet_mac
+*.app
+
+# System files
+.DS_Store
+*.swp
+
+# Build directories
+build/
+dist/
