@@ -290,8 +290,17 @@ void Check_End_Game(void) {
             }
         }
         
-        // Calculate Bonus (classic Bubblet rule: 0 bubbles = 1000)
-        bubble_bonus_0 = (remaining_bubbles == 0) ? 1000 : 0;
+        // Calculate Bonus (classic Bubblet rule: matching original)
+        if (setup_data_0 == 0 || setup_data_0 == 2 || setup_data_0 == 3) {
+            if (remaining_bubbles == 0) bubble_bonus_0 = 500;
+            else if (remaining_bubbles == 1) bubble_bonus_0 = 200;
+            else if (remaining_bubbles == 2) bubble_bonus_0 = 100;
+            else if (remaining_bubbles == 3) bubble_bonus_0 = 50;
+            else if (remaining_bubbles == 4) bubble_bonus_0 = 25;
+            else bubble_bonus_0 = 0;
+        } else {
+            bubble_bonus_0 = 0;
+        }
         last_total_score_0 = current_game_score + bubble_bonus_0;
         
         // Update stats for the current mode
@@ -326,7 +335,7 @@ void Update_Animations(float dt) {
     if (!animations_active) return;
     
     BOOL any_active = FALSE;
-    float speed = 250.0f; // Slower, relaxed feel
+    float speed = 320.0f; // 8 px/frame @ 40 FPS = 320 px/sec (matches original)
     
     // Safety: Iterate through valid game field indices only
     for (int col = 0; col < GRID_COLS; col++) {
@@ -417,6 +426,7 @@ void Execute_Button(int buttonIndex) {
             break;
         case 5: // "Undo"
             // Originally disabled in shareware, shows info screen
+            HAL_PlaySound("Nehehe");
             mode_0 = MODE_UNDO_INFO;
             break;
         case 2: // "Setup"

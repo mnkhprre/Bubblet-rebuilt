@@ -2,7 +2,7 @@
 
 CC = gcc
 CFLAGS = -Wall -O2 $(shell pkg-config --cflags sdl2 SDL2_mixer SDL2_ttf) -I.
-LDFLAGS = $(shell pkg-config --libs sdl2 SDL2_mixer SDL2_ttf) -lm
+LDFLAGS = $(shell pkg-config --libs sdl2 SDL2_mixer SDL2_ttf) -lm -lcurl
 
 # Output name
 TARGET = bubblet_linux
@@ -15,7 +15,8 @@ SRCS = bubblet_main_linux.c \
        bubblet_input.c \
        bubblet_logic.c \
        bubblet_sound.c \
-       bubblet_ui.c
+       bubblet_ui.c \
+       bubblet_update.c
 
 # Objects
 OBJS = $(SRCS:.c=.o)

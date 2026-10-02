@@ -1,4 +1,0 @@
-#!/bin/bash
-# Wrapper for Bubblet! to ensure it finds its assets
-cd /usr/share/bubblet
-./bubblet_linux "$@"

@@ -1,9 +1,0 @@
-[Desktop Entry]
-Name=Bubblet!
-Comment=Classic bubble-popping game (Modernized Port)
-Exec=bubblet
-Icon=bubblet
-Terminal=false
-Type=Application
-Categories=Game;LogicGame;
-Keywords=bubble;pop;puzzle;

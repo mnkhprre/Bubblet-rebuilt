@@ -12,6 +12,7 @@ static Mix_Chunk *sfx_Intro = NULL;
 static Mix_Chunk *sfx_Score = NULL;
 static Mix_Chunk *sfx_Highscore = NULL;
 static Mix_Chunk *sfx_Boing = NULL;
+static Mix_Chunk *sfx_Nehehe = NULL;
 static TTF_Font *gameFont = NULL;
 
 BOOL HAL_Init(void) {
@@ -67,6 +68,10 @@ BOOL HAL_Init(void) {
   if (!sfx_Boing) {
     sfx_Boing = sfx_Intro; // Only fallback to Intro if it exists
   }
+
+  sfx_Nehehe = Mix_LoadWAV("nehehe.wav");
+  if (!sfx_Nehehe)
+    printf("[AUDIO] Failed to load nehehe.wav: %s\n", Mix_GetError());
 
   // Load a system font as fallback
   const char *fontPaths[] = {
@@ -269,6 +274,8 @@ void HAL_PlaySound(const char *alias) {
     chunk = sfx_Highscore;
   else if (strcmp(alias, "Boing") == 0 || strcmp(alias, "boing") == 0)
     chunk = sfx_Boing;
+  else if (strcmp(alias, "Nehehe") == 0 || strcmp(alias, "nehehe") == 0)
+    chunk = sfx_Nehehe;
 
   if (chunk) {
     printf("[AUDIO] Playing alias: %s\n", alias);

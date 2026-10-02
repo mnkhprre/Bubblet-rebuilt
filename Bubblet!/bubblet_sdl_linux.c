@@ -12,6 +12,7 @@ static Mix_Chunk *sfx_Intro = NULL;
 static Mix_Chunk *sfx_Score = NULL;
 static Mix_Chunk *sfx_Highscore = NULL;
 static Mix_Chunk *sfx_Boing = NULL;
+static Mix_Chunk *sfx_Nehehe = NULL;
 static TTF_Font *gameFont = NULL;
 
 BOOL HAL_Init(void) {
@@ -34,6 +35,7 @@ BOOL HAL_Init(void) {
   if (!sdlWindow)
     return FALSE;
 
+  SDL_SetHint(SDL_HINT_RENDER_DRIVER, "opengl");
   hal_Context = SDL_CreateRenderer(
       sdlWindow, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
   if (!hal_Context)
@@ -66,6 +68,10 @@ BOOL HAL_Init(void) {
   if (!sfx_Boing) {
     sfx_Boing = sfx_Intro; // Only fallback to Intro if it exists
   }
+
+  sfx_Nehehe = Mix_LoadWAV("nehehe.wav");
+  if (!sfx_Nehehe)
+    printf("[AUDIO] Failed to load nehehe.wav: %s\n", Mix_GetError());
 
   // Load a system font as fallback
   const char *fontPaths[] = {
@@ -115,25 +121,68 @@ void HAL_Shutdown(void) {
 }
 
 SurfaceHandle HAL_LoadSurface(const char *filename) {
-  SDL_Surface *loadedSurface = SDL_LoadBMP(filename);
-  if (!loadedSurface) {
+  SDL_Surface *surface = SDL_LoadBMP(filename);
+  if (!surface) {
     printf("Unable to load image %s! SDL Error: %s\n", filename,
            SDL_GetError());
     return NULL;
   }
 
-  // Set color key from the first pixel (often (0,0) in old game sprites)
-  Uint32 colorkey;
-  if (SDL_LockSurface(loadedSurface) == 0) {
-    Uint8 *pixels = (Uint8 *)loadedSurface->pixels;
-    colorkey = *(Uint32 *)pixels;
-    SDL_UnlockSurface(loadedSurface);
-    SDL_SetColorKey(loadedSurface, SDL_TRUE, colorkey);
+  // Read first pixel as color key BEFORE conversion
+  Uint8 keyR = 0, keyG = 0, keyB = 0;
+  if (SDL_LockSurface(surface) == 0) {
+    Uint8 *src = (Uint8 *)surface->pixels;
+    int bpp = surface->format->BytesPerPixel;
+    Uint32 first = 0;
+    SDL_memcpy(&first, src, bpp);
+    SDL_GetRGB(first, surface->format, &keyR, &keyG, &keyB);
+    SDL_UnlockSurface(surface);
   }
 
-  SDL_Texture *texture =
-      SDL_CreateTextureFromSurface((SDL_Renderer *)hal_Context, loadedSurface);
-  SDL_FreeSurface(loadedSurface);
+  // Manually convert BMP (24-bit BGR) to RGBA buffer with color key
+  int w = surface->w, h = surface->h;
+  Uint8 *rgba_buf = (Uint8 *)malloc(w * h * 4);
+  if (!rgba_buf) {
+    SDL_FreeSurface(surface);
+    return NULL;
+  }
+
+  SDL_LockSurface(surface);
+  Uint8 *src = (Uint8 *)surface->pixels;
+  for (int y = 0; y < h; y++) {
+    for (int x = 0; x < w; x++) {
+      int src_off = y * surface->pitch + x * 3;
+      int dst_off = (y * w + x) * 4;
+      Uint8 b = src[src_off + 0];
+      Uint8 g = src[src_off + 1];
+      Uint8 r = src[src_off + 2];
+      // Check if this pixel matches color key
+      Uint8 a = (r == keyR && g == keyG && b == keyB) ? 0 : 255;
+      rgba_buf[dst_off + 0] = r;
+      rgba_buf[dst_off + 1] = g;
+      rgba_buf[dst_off + 2] = b;
+      rgba_buf[dst_off + 3] = a;
+    }
+  }
+  SDL_UnlockSurface(surface);
+  SDL_FreeSurface(surface);
+
+  // Create texture and upload manually - use ABGR8888 for OpenGL compatibility
+  SDL_Texture *texture = SDL_CreateTexture(
+      (SDL_Renderer *)hal_Context, SDL_PIXELFORMAT_ABGR8888,
+      SDL_TEXTUREACCESS_STATIC, w, h);
+  if (!texture) {
+    printf("CreateTexture FAILED %s: %s\n", filename, SDL_GetError());
+    free(rgba_buf);
+    return NULL;
+  }
+
+  if (SDL_UpdateTexture(texture, NULL, rgba_buf, w * 4) != 0) {
+    printf("UpdateTexture FAILED %s: %s\n", filename, SDL_GetError());
+  }
+  // Default blend mode - will be overridden per-draw in HAL_DrawSurface
+  SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND);
+  free(rgba_buf);
   return texture;
 }
 
@@ -151,8 +200,13 @@ void HAL_DrawSurface(SurfaceHandle src, SurfaceHandle dest, int x, int y,
   int w, h;
   SDL_QueryTexture((SDL_Texture *)src, NULL, NULL, &w, &h);
   SDL_Rect destRect = {x, y, w, h};
-  SDL_RenderCopy((SDL_Renderer *)hal_Context, (SDL_Texture *)src, NULL,
-                 &destRect);
+  SDL_SetTextureBlendMode((SDL_Texture *)src,
+                          useColorKey ? SDL_BLENDMODE_BLEND
+                                      : SDL_BLENDMODE_NONE);
+  int ret = SDL_RenderCopy((SDL_Renderer *)hal_Context, (SDL_Texture *)src,
+                           NULL, &destRect);
+  if (ret != 0)
+    printf("[DRAW] SDL_RenderCopy FAILED: %s\n", SDL_GetError());
 }
 
 void HAL_DrawSurfaceEx(SurfaceHandle src, SurfaceHandle dest, int x, int y,
@@ -160,8 +214,13 @@ void HAL_DrawSurfaceEx(SurfaceHandle src, SurfaceHandle dest, int x, int y,
   if (!src)
     return;
   SDL_Rect destRect = {x, y, w, h};
-  SDL_RenderCopy((SDL_Renderer *)hal_Context, (SDL_Texture *)src, NULL,
-                 &destRect);
+  SDL_SetTextureBlendMode((SDL_Texture *)src,
+                          useColorKey ? SDL_BLENDMODE_BLEND
+                                      : SDL_BLENDMODE_NONE);
+  int ret = SDL_RenderCopy((SDL_Renderer *)hal_Context, (SDL_Texture *)src,
+                           NULL, &destRect);
+  if (ret != 0)
+    printf("[DRAW] SDL_RenderCopyEx FAILED: %s\n", SDL_GetError());
 }
 
 void HAL_Present(void) { SDL_RenderPresent((SDL_Renderer *)hal_Context); }
@@ -222,6 +281,8 @@ void HAL_PlaySound(const char *alias) {
     chunk = sfx_Highscore;
   else if (strcmp(alias, "Boing") == 0 || strcmp(alias, "boing") == 0)
     chunk = sfx_Boing;
+  else if (strcmp(alias, "Nehehe") == 0 || strcmp(alias, "nehehe") == 0)
+    chunk = sfx_Nehehe;
 
   if (chunk) {
     printf("[AUDIO] Playing alias: %s\n", alias);

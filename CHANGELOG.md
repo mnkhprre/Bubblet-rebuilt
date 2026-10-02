@@ -5,6 +5,50 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-10-02
+
+### Added
+- **nehehe Sound Effect**: Plays when clicking Undo button (shareware mode)
+  - Sourced from original `Bubblet-source/snd/nehehe_small.wav`
+  - Integrated into HAL sound system on both macOS and Linux
+
+- **Applications Symlink in DMG**: Drag-and-drop install support
+  - DMG now includes `Applications -> /Applications` symlink
+  - Uses HFS+ filesystem for symlink compatibility
+
+- **Cursor Improvements**:
+  - Replaced with `csr_7.bmp` from original source
+  - Converted from PNG to BMP with alpha channel
+  - Cropped to 51x61 (removed transparent border)
+
+### Fixed
+- **Bonus Calculation**: Now matches original game logic exactly
+  - Normal/Shifter/Megashift: 0 bubbles=500, 1=200, 2=100, 3=50, 4=25, 5+=0
+  - Continuous: No bonus (endless mode)
+  - Previously only gave 1000 for 0 bubbles, 0 otherwise
+
+- **Animation Speed**: Matched original 40 FPS timer behavior
+  - Changed from 250 px/sec → 320 px/sec (8 px/frame @ 40 FPS)
+  - Bubbles now fall/shift at original speed
+
+- **Sound Assets Updated**:
+  - `Pop.wav` replaced with `pop_pcm.wav` (16-bit stereo 44.1kHz)
+  - All Bitmap_###.bmp assets synced from original `Bubblet-source/gfx/`
+
+### Changed
+- **Asset Organization**: All resources now use `Bitmap_###.bmp` naming
+  - Matches original resource IDs (100-135)
+  - Loaded via `HAL_LoadResource(int resourceId)`
+
+- **Build System**: Clean rebuild process
+  - Removed duplicate `Bubblet_Mac/`, `Bubblet_Linux/` directories
+  - Single source of truth in `Bubblet!/`
+
+### Technical Details
+- **Sound System**: Added `sfx_Nehehe` to HAL preload on both platforms
+- **Cursor Loading**: Uses `SDL_CreateColorCursor` with hotspot at (0,0)
+- **DMG Creation**: Uses `-fs HFS+` for symlink support
+
 ## [1.0.1] - 2026-06-19
 
 ### Fixed
