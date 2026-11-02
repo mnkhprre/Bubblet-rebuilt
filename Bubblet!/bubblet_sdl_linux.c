@@ -1,6 +1,13 @@
 #include "bubblet_globals.h"
 #include <SDL2/SDL_mixer.h>
+#ifdef _WIN32
+#include <SDL2/SDL_syswm.h>
+#include "bubblet_resource.h"
+#endif
 #include <SDL2/SDL_ttf.h>
+#ifdef _WIN32
+#include <direct.h>
+#endif
 
 // HAL Globals
 void *hal_Context = NULL; // SDL_Renderer*
@@ -14,30 +21,137 @@ static Mix_Chunk *sfx_Highscore = NULL;
 static Mix_Chunk *sfx_Boing = NULL;
 static Mix_Chunk *sfx_Nehehe = NULL;
 static TTF_Font *gameFont = NULL;
+static SDL_Cursor *gameCursor = NULL;
+#ifdef _WIN32
+static HICON gameWindowIcon = NULL;
+static HICON gameSmallWindowIcon = NULL;
+#endif
+static BOOL sdlInitialized = FALSE;
+static BOOL audioInitialized = FALSE;
+static BOOL ttfInitialized = FALSE;
+
+static void DestroyTexture(SurfaceHandle *texture) {
+  if (*texture) {
+    SDL_DestroyTexture((SDL_Texture *)*texture);
+    *texture = NULL;
+  }
+}
+
+#ifdef _WIN32
+static void SetWindowIcon(SDL_Window *window) {
+  SDL_SysWMinfo windowInfo;
+  SDL_VERSION(&windowInfo.version);
+  if (!SDL_GetWindowWMInfo(window, &windowInfo)) {
+    fprintf(stderr, "Unable to get Windows window handle: %s\n",
+            SDL_GetError());
+    return;
+  }
+
+  HINSTANCE instance = GetModuleHandle(NULL);
+  gameWindowIcon =
+      (HICON)LoadImage(instance, MAKEINTRESOURCE(IDI_BUBBLET_ICON),
+                       IMAGE_ICON, 32, 32, LR_DEFAULTCOLOR);
+  gameSmallWindowIcon =
+      (HICON)LoadImage(instance, MAKEINTRESOURCE(IDI_BUBBLET_ICON),
+                       IMAGE_ICON, 16, 16, LR_DEFAULTCOLOR);
+  if (!gameWindowIcon || !gameSmallWindowIcon) {
+    fprintf(stderr, "Unable to load embedded Bubblet window icon.\n");
+    if (gameWindowIcon)
+      DestroyIcon(gameWindowIcon);
+    if (gameSmallWindowIcon)
+      DestroyIcon(gameSmallWindowIcon);
+    gameWindowIcon = NULL;
+    gameSmallWindowIcon = NULL;
+    return;
+  }
+
+  SendMessage(windowInfo.info.win.window, WM_SETICON, ICON_BIG,
+              (LPARAM)gameWindowIcon);
+  SendMessage(windowInfo.info.win.window, WM_SETICON, ICON_SMALL,
+              (LPARAM)gameSmallWindowIcon);
+}
+
+static BOOL SetWorkingDirectoryToExecutable(void) {
+  char *basePath = SDL_GetBasePath();
+  if (!basePath) {
+    fprintf(stderr, "Unable to determine executable directory: %s\n",
+            SDL_GetError());
+    return FALSE;
+  }
+
+  int widePathLength =
+      MultiByteToWideChar(CP_UTF8, 0, basePath, -1, NULL, 0);
+  wchar_t *widePath =
+      widePathLength > 0 ? malloc((size_t)widePathLength * sizeof(*widePath))
+                         : NULL;
+  if (!widePath ||
+      !MultiByteToWideChar(CP_UTF8, 0, basePath, -1, widePath,
+                           widePathLength)) {
+    fprintf(stderr, "Unable to convert executable directory to UTF-16.\n");
+    free(widePath);
+    SDL_free(basePath);
+    return FALSE;
+  }
+
+  int result = _wchdir(widePath);
+  if (result != 0)
+    perror("Unable to set working directory to executable directory");
+
+  free(widePath);
+  SDL_free(basePath);
+  return result == 0;
+}
+#endif
 
 BOOL HAL_Init(void) {
+#ifdef _WIN32
+  if (!SetWorkingDirectoryToExecutable())
+    return FALSE;
+#endif
+
   if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0) {
     printf("SDL could not initialize! SDL_Error: %s\n", SDL_GetError());
     return FALSE;
   }
+  sdlInitialized = TRUE;
 
   if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0) {
     printf("SDL_mixer could not initialize! SDL_Error: %s\n", Mix_GetError());
+  } else {
+    audioInitialized = TRUE;
   }
 
   if (TTF_Init() == -1) {
     printf("SDL_ttf could not initialize! TTF_Error: %s\n", TTF_GetError());
+  } else {
+    ttfInitialized = TRUE;
   }
 
+#ifdef _WIN32
+  sdlWindow = SDL_CreateWindow("Bubblet! Rebuilt", SDL_WINDOWPOS_CENTERED,
+                               SDL_WINDOWPOS_CENTERED, 493, 419,
+                               SDL_WINDOW_SHOWN);
+#else
   sdlWindow =
       SDL_CreateWindow("Bubblet! Rebuilt (Linux/SDL2)", SDL_WINDOWPOS_CENTERED,
                        SDL_WINDOWPOS_CENTERED, 493, 419, SDL_WINDOW_SHOWN);
+#endif
   if (!sdlWindow)
     return FALSE;
+#ifdef _WIN32
+  SetWindowIcon(sdlWindow);
+#endif
 
+#ifdef _WIN32
+  hal_Context = SDL_CreateRenderer(
+      sdlWindow, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+  if (!hal_Context)
+    hal_Context = SDL_CreateRenderer(sdlWindow, -1, SDL_RENDERER_SOFTWARE);
+#else
   SDL_SetHint(SDL_HINT_RENDER_DRIVER, "opengl");
   hal_Context = SDL_CreateRenderer(
       sdlWindow, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+#endif
   if (!hal_Context)
     return FALSE;
 
@@ -74,6 +188,16 @@ BOOL HAL_Init(void) {
     printf("[AUDIO] Failed to load nehehe.wav: %s\n", Mix_GetError());
 
   // Load a system font as fallback
+#ifdef _WIN32
+  const char *windowsDirectory = getenv("WINDIR");
+  char windowsFontPath[MAX_PATH];
+  if (!windowsDirectory)
+    windowsDirectory = "C:/Windows";
+  snprintf(windowsFontPath, sizeof(windowsFontPath), "%s/Fonts/arial.ttf",
+           windowsDirectory);
+  const char *fontPaths[] = {windowsFontPath, "C:/Windows/Fonts/segoeui.ttf",
+                             "font.ttf"};
+#else
   const char *fontPaths[] = {
       "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
       "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
@@ -82,6 +206,7 @@ BOOL HAL_Init(void) {
       "/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf",
       "font.ttf" // Local fallback
   };
+#endif
   int numFontPaths = sizeof(fontPaths) / sizeof(fontPaths[0]);
   for (int i = 0; i < numFontPaths; i++) {
     gameFont = TTF_OpenFont(fontPaths[i], 16);
@@ -95,9 +220,9 @@ BOOL HAL_Init(void) {
   // Load custom cursor
   SDL_Surface *cursorSurface = SDL_LoadBMP("cursor.bmp");
   if (cursorSurface) {
-    SDL_Cursor *cursor = SDL_CreateColorCursor(cursorSurface, 0, 0);
-    if (cursor) {
-      SDL_SetCursor(cursor);
+    gameCursor = SDL_CreateColorCursor(cursorSurface, 0, 0);
+    if (gameCursor) {
+      SDL_SetCursor(gameCursor);
     }
     SDL_FreeSurface(cursorSurface);
   } else {
@@ -109,15 +234,96 @@ BOOL HAL_Init(void) {
 }
 
 void HAL_Shutdown(void) {
-  if (gameFont)
+  if (gameCursor) {
+    SDL_SetCursor(SDL_GetDefaultCursor());
+    SDL_FreeCursor(gameCursor);
+    gameCursor = NULL;
+  }
+#ifdef _WIN32
+  if (sdlWindow && (gameWindowIcon || gameSmallWindowIcon)) {
+    SDL_SysWMinfo windowInfo;
+    SDL_VERSION(&windowInfo.version);
+    if (SDL_GetWindowWMInfo(sdlWindow, &windowInfo)) {
+      SendMessage(windowInfo.info.win.window, WM_SETICON, ICON_BIG, 0);
+      SendMessage(windowInfo.info.win.window, WM_SETICON, ICON_SMALL, 0);
+    }
+  }
+  if (gameWindowIcon) {
+    DestroyIcon(gameWindowIcon);
+    gameWindowIcon = NULL;
+  }
+  if (gameSmallWindowIcon) {
+    DestroyIcon(gameSmallWindowIcon);
+    gameSmallWindowIcon = NULL;
+  }
+#endif
+  if (gameFont) {
     TTF_CloseFont(gameFont);
-  if (hal_Context)
+    gameFont = NULL;
+  }
+
+  for (int i = 0; i < 20; i++) {
+    DestroyTexture(&buttons_0[i].lpSurfaceNormal);
+    DestroyTexture(&buttons_0[i].lpSurfacePressed);
+  }
+  DestroyTexture(&bk_pic_0);
+  DestroyTexture(&pic_0);
+  DestroyTexture(&paper_pic_0);
+  DestroyTexture(&paper_x_pic_0);
+  DestroyTexture(&setup_map_pic_0);
+  DestroyTexture(&checked_box_pic_0);
+  DestroyTexture(&watermark_pic_0);
+  DestroyTexture(&statistics_bg_pic_0);
+  DestroyTexture(&gameover_labels_pic_0);
+  for (int i = 0; i < 5; i++)
+    DestroyTexture(&bubble_pics[i]);
+
+  if (sfx_Click)
+    Mix_FreeChunk(sfx_Click);
+  if (sfx_Pop)
+    Mix_FreeChunk(sfx_Pop);
+  if (sfx_Megapop && sfx_Megapop != sfx_Pop)
+    Mix_FreeChunk(sfx_Megapop);
+  if (sfx_Intro)
+    Mix_FreeChunk(sfx_Intro);
+  if (sfx_Score)
+    Mix_FreeChunk(sfx_Score);
+  if (sfx_Highscore)
+    Mix_FreeChunk(sfx_Highscore);
+  if (sfx_Boing && sfx_Boing != sfx_Intro)
+    Mix_FreeChunk(sfx_Boing);
+  if (sfx_Nehehe)
+    Mix_FreeChunk(sfx_Nehehe);
+  sfx_Click = NULL;
+  sfx_Pop = NULL;
+  sfx_Megapop = NULL;
+  sfx_Intro = NULL;
+  sfx_Score = NULL;
+  sfx_Highscore = NULL;
+  sfx_Boing = NULL;
+  sfx_Nehehe = NULL;
+
+  if (hal_Context) {
     SDL_DestroyRenderer((SDL_Renderer *)hal_Context);
-  if (sdlWindow)
+    hal_Context = NULL;
+  }
+  if (sdlWindow) {
     SDL_DestroyWindow(sdlWindow);
-  Mix_CloseAudio();
-  TTF_Quit();
-  SDL_Quit();
+    sdlWindow = NULL;
+  }
+  if (audioInitialized) {
+    Mix_CloseAudio();
+    audioInitialized = FALSE;
+  }
+  if (ttfInitialized) {
+    TTF_Quit();
+    ttfInitialized = FALSE;
+  }
+  if (sdlInitialized) {
+    SDL_Quit();
+    sdlInitialized = FALSE;
+  }
+  main_hWnd = NULL;
 }
 
 SurfaceHandle HAL_LoadSurface(const char *filename) {
@@ -128,61 +334,47 @@ SurfaceHandle HAL_LoadSurface(const char *filename) {
     return NULL;
   }
 
-  // Read first pixel as color key BEFORE conversion
-  Uint8 keyR = 0, keyG = 0, keyB = 0;
-  if (SDL_LockSurface(surface) == 0) {
-    Uint8 *src = (Uint8 *)surface->pixels;
-    int bpp = surface->format->BytesPerPixel;
-    Uint32 first = 0;
-    SDL_memcpy(&first, src, bpp);
-    SDL_GetRGB(first, surface->format, &keyR, &keyG, &keyB);
-    SDL_UnlockSurface(surface);
-  }
-
-  // Manually convert BMP (24-bit BGR) to RGBA buffer with color key
-  int w = surface->w, h = surface->h;
-  Uint8 *rgba_buf = (Uint8 *)malloc(w * h * 4);
-  if (!rgba_buf) {
+  if (SDL_LockSurface(surface) != 0) {
+    fprintf(stderr, "Unable to lock image %s: %s\n", filename, SDL_GetError());
     SDL_FreeSurface(surface);
     return NULL;
   }
 
-  SDL_LockSurface(surface);
-  Uint8 *src = (Uint8 *)surface->pixels;
-  for (int y = 0; y < h; y++) {
-    for (int x = 0; x < w; x++) {
-      int src_off = y * surface->pitch + x * 3;
-      int dst_off = (y * w + x) * 4;
-      Uint8 b = src[src_off + 0];
-      Uint8 g = src[src_off + 1];
-      Uint8 r = src[src_off + 2];
-      // Check if this pixel matches color key
-      Uint8 a = (r == keyR && g == keyG && b == keyB) ? 0 : 255;
-      rgba_buf[dst_off + 0] = r;
-      rgba_buf[dst_off + 1] = g;
-      rgba_buf[dst_off + 2] = b;
-      rgba_buf[dst_off + 3] = a;
-    }
-  }
+  Uint32 firstPixel = 0;
+  SDL_memcpy(&firstPixel, surface->pixels, surface->format->BytesPerPixel);
   SDL_UnlockSurface(surface);
-  SDL_FreeSurface(surface);
 
-  // Create texture and upload manually - use ABGR8888 for OpenGL compatibility
-  SDL_Texture *texture = SDL_CreateTexture(
-      (SDL_Renderer *)hal_Context, SDL_PIXELFORMAT_ABGR8888,
-      SDL_TEXTUREACCESS_STATIC, w, h);
-  if (!texture) {
-    printf("CreateTexture FAILED %s: %s\n", filename, SDL_GetError());
-    free(rgba_buf);
+  if (SDL_SetColorKey(surface, SDL_TRUE, firstPixel) != 0) {
+    fprintf(stderr, "Unable to set image color key for %s: %s\n", filename,
+            SDL_GetError());
+    SDL_FreeSurface(surface);
     return NULL;
   }
 
-  if (SDL_UpdateTexture(texture, NULL, rgba_buf, w * 4) != 0) {
-    printf("UpdateTexture FAILED %s: %s\n", filename, SDL_GetError());
+  SDL_Surface *rgbaSurface =
+      SDL_ConvertSurfaceFormat(surface, SDL_PIXELFORMAT_RGBA32, 0);
+  SDL_FreeSurface(surface);
+  if (!rgbaSurface) {
+    fprintf(stderr, "Unable to convert image %s: %s\n", filename,
+            SDL_GetError());
+    return NULL;
   }
-  // Default blend mode - will be overridden per-draw in HAL_DrawSurface
-  SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND);
-  free(rgba_buf);
+
+  SDL_Texture *texture = SDL_CreateTextureFromSurface(
+      (SDL_Renderer *)hal_Context, rgbaSurface);
+  SDL_FreeSurface(rgbaSurface);
+  if (!texture) {
+    fprintf(stderr, "Unable to create texture for %s: %s\n", filename,
+            SDL_GetError());
+    return NULL;
+  }
+
+  if (SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND) != 0) {
+    fprintf(stderr, "Unable to set blend mode for %s: %s\n", filename,
+            SDL_GetError());
+    SDL_DestroyTexture(texture);
+    return NULL;
+  }
   return texture;
 }
 
@@ -305,7 +497,8 @@ void HAL_ProcessEvents(void) {
   SDL_Event e;
   while (SDL_PollEvent(&e) != 0) {
     if (e.type == SDL_QUIT) {
-      exit(0);
+      game_initialized = FALSE;
+      break;
     } else if (e.type == SDL_MOUSEBUTTONDOWN) {
       printf("[INPUT] Mouse DOWN at X=%d, Y=%d\n", e.button.x, e.button.y);
       Check_Button_Down(e.button.x, e.button.y);

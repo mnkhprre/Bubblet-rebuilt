@@ -1,0 +1,6 @@
+#ifndef BUBBLET_RESOURCE_H
+#define BUBBLET_RESOURCE_H
+
+#define IDI_BUBBLET_ICON 101
+
+#endif

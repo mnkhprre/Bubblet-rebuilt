@@ -53,10 +53,25 @@ void Reset_Statistics(void) {
 
 // New_Game: Starts a new game by randomizing the grid
 void New_Game(void) {
+    if (setup_data_0 < 0 || setup_data_0 > 3)
+        setup_data_0 = 0;
+
+    memset(PlayField_0, 0, sizeof(PlayField_0));
+    memset(CheckGrid, 0, sizeof(CheckGrid));
+    memset(anim_offset_x, 0, sizeof(anim_offset_x));
+    memset(anim_offset_y, 0, sizeof(anim_offset_y));
+
     game_score_0 = 0;
+    game_type_0 = setup_data_0;
+    current_game_score = 0;
+    bubble_bonus_0 = 0;
+    last_total_score_0 = 0;
+    is_new_highscore = FALSE;
     number_bubbles_marked_0 = 0;
     bubbles_marked_0 = 0;
     game_busy_0 = 0;
+    undo_0 = 0;
+    animations_active = FALSE;
 
     // Initialize random grid
     for (int col = 0; col < GRID_COLS; col++) {
@@ -90,6 +105,87 @@ int FloodFillGrid(int col, int row, int color, unsigned char* checkGrid) {
     return count;
 }
 
+static BOOL Is_Column_Empty(int col) {
+    for (int row = 0; row < GRID_ROWS; row++) {
+        if (PlayField_0[col * 42 + row * 6] != 0)
+            return FALSE;
+    }
+    return TRUE;
+}
+
+static void Move_Column(int sourceCol, int targetCol) {
+    for (int row = 0; row < GRID_ROWS; row++) {
+        int sourceIndex = sourceCol * 42 + row * 6;
+        int targetIndex = targetCol * 42 + row * 6;
+        float verticalOffset = anim_offset_y[sourceIndex];
+        PlayField_0[targetIndex] = PlayField_0[sourceIndex];
+        PlayField_0[sourceIndex] = 0;
+        anim_offset_x[sourceIndex] = 0;
+        anim_offset_y[sourceIndex] = 0;
+        anim_offset_x[targetIndex] =
+            PlayField_0[targetIndex] != 0
+                ? (sourceCol - targetCol) * BUBBLE_SIZE
+                : 0;
+        anim_offset_y[targetIndex] = verticalOffset;
+    }
+    animations_active = TRUE;
+}
+
+static void Compact_Columns_Right(void) {
+    int targetCol = GRID_COLS - 1;
+    for (int col = GRID_COLS - 1; col >= 0; col--) {
+        if (!Is_Column_Empty(col)) {
+            if (col != targetCol)
+                Move_Column(col, targetCol);
+            targetCol--;
+        }
+    }
+}
+
+static void Fill_Empty_Columns(void) {
+    int rightmostEmptyCol = -1;
+    for (int col = 0; col < GRID_COLS; col++) {
+        if (Is_Column_Empty(col))
+            rightmostEmptyCol = col;
+    }
+
+    for (int col = 0; col <= rightmostEmptyCol; col++) {
+        for (int row = 0; row < GRID_ROWS; row++) {
+            int idx = col * 42 + row * 6;
+            PlayField_0[idx] = (unsigned char)(rand() % 5 + 1);
+            anim_offset_x[idx] =
+                -(rightmostEmptyCol + 1 - col) * BUBBLE_SIZE;
+            anim_offset_y[idx] = 0;
+        }
+        animations_active = TRUE;
+    }
+}
+
+static void Shift_Bubbles_Right(void) {
+    for (int row = 0; row < GRID_ROWS; row++) {
+        int targetCol = GRID_COLS - 1;
+        for (int col = GRID_COLS - 1; col >= 0; col--) {
+            int sourceIndex = col * 42 + row * 6;
+            if (PlayField_0[sourceIndex] == 0)
+                continue;
+
+            if (col != targetCol) {
+                int targetIndex = targetCol * 42 + row * 6;
+                float verticalOffset = anim_offset_y[sourceIndex];
+                PlayField_0[targetIndex] = PlayField_0[sourceIndex];
+                PlayField_0[sourceIndex] = 0;
+                anim_offset_x[targetIndex] =
+                    (col - targetCol) * BUBBLE_SIZE;
+                anim_offset_y[targetIndex] = verticalOffset;
+                anim_offset_x[sourceIndex] = 0;
+                anim_offset_y[sourceIndex] = 0;
+                animations_active = TRUE;
+            }
+            targetCol--;
+        }
+    }
+}
+
 // Update_Bubble: Handles gravity and column shifting
 void Update_Bubble(void) {
     // 1. Gravity: For each column, move bubbles down to fill gaps
@@ -113,226 +209,100 @@ void Update_Bubble(void) {
         }
     }
 
-    // 2. Column Shifting: Branch based on game style (setup_data_0)
-    if (setup_data_0 == 1) {
-        // --- CONTINUOUS MODE ---
-        // Instead of shifting columns, fill empty cells with new random bubbles
-
-        for (int col = 0; col < GRID_COLS; col++) {
-            for (int row = 0; row < GRID_ROWS; row++) {
-                int idx = col * 42 + row * 6;
-                if (PlayField_0[idx] == 0) {
-                    PlayField_0[idx] = (unsigned char)(rand() % 5 + 1);
-                    anim_offset_y[idx] = -(row + 1) * BUBBLE_SIZE;
-                    anim_offset_x[idx] = 0;
-                    animations_active = TRUE;
-
-                }
-            }
-        }
-    } else if (setup_data_0 == 2) {
-        // --- SHIFTER MODE ---
-        printf("[DEBUG] SHIFTER mode active (setup_data_0=%d)\n", setup_data_0);
-        int shifted = 0;
-        
-        // Left half: scan from col 4 down to 0, compact toward 4
-        {
-            int targetCol = 4;
-            for (int col = 4; col >= 0; col--) {
-                BOOL isEmpty = TRUE;
-                for (int r = 0; r < GRID_ROWS; r++) if (PlayField_0[col * 42 + r * 6] != 0) { isEmpty = FALSE; break; }
-                if (!isEmpty) {
-                    if (col != targetCol) {
-                        for (int r = 0; r < GRID_ROWS; r++) {
-                            PlayField_0[targetCol * 42 + r * 6] = PlayField_0[col * 42 + r * 6];
-                            PlayField_0[col * 42 + r * 6] = 0;
-                            if (PlayField_0[targetCol * 42 + r * 6] != 0) {
-                                anim_offset_x[targetCol * 42 + r * 6] = (float)(col - targetCol) * BUBBLE_SIZE;
-                                anim_offset_y[targetCol * 42 + r * 6] = 0;
-                                animations_active = TRUE;
-                            }
-                        }
-                        shifted++;
-                    }
-                    targetCol--;
-                }
-            }
-        }
-        // Right half: scan from col 5 up to 9, compact toward 5
-        {
-            int targetCol = 5;
-            for (int col = 5; col < GRID_COLS; col++) {
-                BOOL isEmpty = TRUE;
-                for (int r = 0; r < GRID_ROWS; r++) if (PlayField_0[col * 42 + r * 6] != 0) { isEmpty = FALSE; break; }
-                if (!isEmpty) {
-                    if (col != targetCol) {
-                        for (int r = 0; r < GRID_ROWS; r++) {
-                            PlayField_0[targetCol * 42 + r * 6] = PlayField_0[col * 42 + r * 6];
-                            PlayField_0[col * 42 + r * 6] = 0;
-                            if (PlayField_0[targetCol * 42 + r * 6] != 0) {
-                                anim_offset_x[targetCol * 42 + r * 6] = (float)(col - targetCol) * BUBBLE_SIZE;
-                                anim_offset_y[targetCol * 42 + r * 6] = 0;
-                                animations_active = TRUE;
-                            }
-                        }
-                    }
-                    targetCol++;
-                }
-            }
-        }
-        printf("[DEBUG] SHIFTER: shifted %d columns\n", shifted);
-    } else if (setup_data_0 == 3) {
-        // --- MEGASHIFT MODE ---
-        printf("[DEBUG] MEGASHIFT mode active (setup_data_0=%d)\n", setup_data_0);
-        int mshifted = 0;
-        // Left half: compact toward column 3
-        {
-            int targetCol = 3;
-            for (int col = 3; col >= 0; col--) {
-                BOOL isEmpty = TRUE;
-                for (int r = 0; r < GRID_ROWS; r++) if (PlayField_0[col * 42 + r * 6] != 0) { isEmpty = FALSE; break; }
-                if (!isEmpty) {
-                    if (col != targetCol) {
-                        for (int r = 0; r < GRID_ROWS; r++) {
-                            PlayField_0[targetCol * 42 + r * 6] = PlayField_0[col * 42 + r * 6];
-                            PlayField_0[col * 42 + r * 6] = 0;
-                            if (PlayField_0[targetCol * 42 + r * 6] != 0) {
-                                anim_offset_x[targetCol * 42 + r * 6] = (float)(col - targetCol) * BUBBLE_SIZE;
-                                anim_offset_y[targetCol * 42 + r * 6] = 0;
-                                animations_active = TRUE;
-                            }
-                        }
-                    }
-                    targetCol--;
-                }
-            }
-        }
-        // Right half: compact toward column 6
-        {
-            int targetCol = 6;
-            for (int col = 6; col < GRID_COLS; col++) {
-                BOOL isEmpty = TRUE;
-                for (int r = 0; r < GRID_ROWS; r++) if (PlayField_0[col * 42 + r * 6] != 0) { isEmpty = FALSE; break; }
-                if (!isEmpty) {
-                    if (col != targetCol) {
-                        for (int r = 0; r < GRID_ROWS; r++) {
-                            PlayField_0[targetCol * 42 + r * 6] = PlayField_0[col * 42 + r * 6];
-                            PlayField_0[col * 42 + r * 6] = 0;
-                            if (PlayField_0[targetCol * 42 + r * 6] != 0) {
-                                anim_offset_x[targetCol * 42 + r * 6] = (float)(col - targetCol) * BUBBLE_SIZE;
-                                anim_offset_y[targetCol * 42 + r * 6] = 0;
-                                animations_active = TRUE;
-                            }
-                        }
-                    }
-                    targetCol++;
-                }
-            }
-        }
-        printf("[DEBUG] MEGASHIFT: shifted %d columns\n", mshifted);
-    } else {
-        // --- STANDARD MODE (setup_data_0 == 0) ---
-        printf("[DEBUG] STANDARD mode active (setup_data_0=%d)\n", setup_data_0);
-        // Empty columns shift left
-        int targetCol = 0;
-        for (int col = 0; col < GRID_COLS; col++) {
-            BOOL isEmpty = TRUE;
-            for (int row = 0; row < GRID_ROWS; row++) if (PlayField_0[col * 42 + row * 6] != 0) { isEmpty = FALSE; break; }
-            if (!isEmpty) {
-                if (col != targetCol) {
-                    for (int row = 0; row < GRID_ROWS; row++) {
-                        PlayField_0[targetCol * 42 + row * 6] = PlayField_0[col * 42 + row * 6];
-                        PlayField_0[col * 42 + row * 6] = 0;
-                        if (PlayField_0[targetCol * 42 + row * 6] != 0) {
-                            anim_offset_x[targetCol * 42 + row * 6] = (col - targetCol) * BUBBLE_SIZE;
-                            anim_offset_y[targetCol * 42 + row * 6] = 0;
-                            animations_active = TRUE;
-                        }
-                    }
-                }
-                targetCol++;
-            }
-        }
-    }
+    // All modes compact columns to the right. Continuous modes refill the
+    // resulting left-side gaps; Shifter modes then pack each row to the right.
+    Compact_Columns_Right();
+    if (game_type_0 == 1 || game_type_0 == 3)
+        Fill_Empty_Columns();
+    if (game_type_0 == 2 || game_type_0 == 3)
+        Shift_Bubbles_Right();
 }
 
-// Check_End_Game: Determines if any valid moves remain and finalizes score
-void Check_End_Game(void) {
-    // Continuous mode never ends automatically — player must press "End"
-    if (setup_data_0 == 1) return;
-    
-    BOOL moves_left = FALSE;
+static void Finish_Game(void) {
+    if (mode_0 != MODE_PLAY)
+        return;
+
     int remaining_bubbles = 0;
-    
-    // Efficiently check for any group of >= 2 bubbles without destroying CheckGrid
-    for (int col = 0; col < GRID_COLS && !moves_left; col++) {
-        for (int row = 0; row < GRID_ROWS && !moves_left; row++) {
+    for (int col = 0; col < GRID_COLS; col++) {
+        for (int row = 0; row < GRID_ROWS; row++) {
+            if (PlayField_0[col * 42 + row * 6] != 0)
+                remaining_bubbles++;
+        }
+    }
+
+    bubble_bonus_0 = 0;
+    if (game_type_0 == 0 || game_type_0 == 2) {
+        if (remaining_bubbles == 0)
+            bubble_bonus_0 = 500;
+        else if (remaining_bubbles == 1)
+            bubble_bonus_0 = 200;
+        else if (remaining_bubbles == 2)
+            bubble_bonus_0 = 100;
+        else if (remaining_bubbles == 3)
+            bubble_bonus_0 = 50;
+        else if (remaining_bubbles == 4)
+            bubble_bonus_0 = 25;
+    }
+
+    last_total_score_0 = current_game_score + bubble_bonus_0;
+    int modeIdx = game_type_0;
+    if (modeIdx < 0 || modeIdx > 3)
+        modeIdx = 0;
+
+    games_played_0[modeIdx]++;
+    total_score_history_0[modeIdx] += last_total_score_0;
+    average_score_0[modeIdx] =
+        (int)(total_score_history_0[modeIdx] / games_played_0[modeIdx]);
+
+    is_new_highscore = last_total_score_0 > high_score_0[modeIdx];
+    if (is_new_highscore)
+        high_score_0[modeIdx] = last_total_score_0;
+
+    memset(CheckGrid, 0, sizeof(CheckGrid));
+    bubbles_marked_0 = 0;
+    number_bubbles_marked_0 = 0;
+    animations_active = FALSE;
+    mode_0 = MODE_GAMEOVER;
+
+    HAL_PlaySound(is_new_highscore ? "Highscore" : "Score");
+    Save_Config();
+    Create_Screen();
+}
+
+// Check_End_Game: Determines if any valid moves remain and finalizes score.
+void Check_End_Game(void) {
+    if (mode_0 != MODE_PLAY || game_type_0 == 1 || animations_active)
+        return;
+
+    for (int col = 0; col < GRID_COLS; col++) {
+        for (int row = 0; row < GRID_ROWS; row++) {
             int idx = col * 42 + row * 6;
             unsigned char color = PlayField_0[idx];
-            if (color != 0) {
-                remaining_bubbles++;
-                // Check right neighbor
-                if (col + 1 < GRID_COLS && PlayField_0[(col + 1) * 42 + row * 6] == color) moves_left = TRUE;
-                // Check bottom neighbor
-                if (row + 1 < GRID_ROWS && PlayField_0[col * 42 + (row + 1) * 6] == color) moves_left = TRUE;
-            }
+            if (color == 0)
+                continue;
+
+            if ((col + 1 < GRID_COLS &&
+                 PlayField_0[(col + 1) * 42 + row * 6] == color) ||
+                (row + 1 < GRID_ROWS &&
+                 PlayField_0[col * 42 + (row + 1) * 6] == color))
+                return;
         }
     }
-    
-    // Also count all bubbles to calculate exact remaining if we exited early
-    if (!moves_left) {
-        remaining_bubbles = 0;
-        for (int col = 0; col < GRID_COLS; col++) {
-            for (int row = 0; row < GRID_ROWS; row++) {
-                if (PlayField_0[col * 42 + row * 6] != 0) {
-                    remaining_bubbles++;
-                }
-            }
-        }
-        
-        // Calculate Bonus (classic Bubblet rule: matching original)
-        if (setup_data_0 == 0 || setup_data_0 == 2 || setup_data_0 == 3) {
-            if (remaining_bubbles == 0) bubble_bonus_0 = 500;
-            else if (remaining_bubbles == 1) bubble_bonus_0 = 200;
-            else if (remaining_bubbles == 2) bubble_bonus_0 = 100;
-            else if (remaining_bubbles == 3) bubble_bonus_0 = 50;
-            else if (remaining_bubbles == 4) bubble_bonus_0 = 25;
-            else bubble_bonus_0 = 0;
-        } else {
-            bubble_bonus_0 = 0;
-        }
-        last_total_score_0 = current_game_score + bubble_bonus_0;
-        
-        // Update stats for the current mode
-        int modeIdx = setup_data_0;
-        if (modeIdx < 0 || modeIdx > 3) modeIdx = 0;
-        
-        games_played_0[modeIdx]++;
-        total_score_history_0[modeIdx] += last_total_score_0;
-        average_score_0[modeIdx] = (int)(total_score_history_0[modeIdx] / games_played_0[modeIdx]);
-        
-        if (last_total_score_0 > high_score_0[modeIdx]) {
-            high_score_0[modeIdx] = last_total_score_0;
-            is_new_highscore = TRUE;
-            HAL_PlaySound("Highscore");
-        } else {
-            is_new_highscore = FALSE;
-            HAL_PlaySound("Score");
-        }
-        
-        // Persist to disk
-        Save_Config();
-        
-        mode_0 = MODE_GAMEOVER;
-        animations_active = FALSE; 
-        Create_Screen();
-    }
+
+    Finish_Game();
 }
 
 // Update_Animations: Smoothly interpolates the bubble render offsets towards 0
 
 void Update_Animations(float dt) {
     if (!animations_active) return;
+
+    if (!animations_enabled_0) {
+        memset(anim_offset_x, 0, sizeof(anim_offset_x));
+        memset(anim_offset_y, 0, sizeof(anim_offset_y));
+        animations_active = FALSE;
+        return;
+    }
     
     BOOL any_active = FALSE;
     float speed = 320.0f; // 8 px/frame @ 40 FPS = 320 px/sec (matches original)
@@ -403,7 +373,8 @@ void Check_Bubbles_Clicked(int mouseX, int mouseY) {
         }
     }
     
-    Check_End_Game();
+    if (!animations_active)
+        Check_End_Game();
     Create_Screen(); // Ensure immediate update
 }
 
@@ -415,14 +386,7 @@ void Execute_Button(int buttonIndex) {
             mode_0 = MODE_PLAY;
             break;
         case 7: // "End" (Play Mode)
-            if (mode_0 == MODE_PLAY) {
-                Check_End_Game();
-                if (mode_0 == MODE_PLAY) {
-                    HAL_PlaySound("Score");
-                    mode_0 = MODE_GAMEOVER;
-                    Create_Screen();
-                }
-            }
+            Finish_Game();
             break;
         case 5: // "Undo"
             // Originally disabled in shareware, shows info screen

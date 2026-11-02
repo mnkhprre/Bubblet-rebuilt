@@ -96,6 +96,7 @@ uint32_t HAL_GetTicks(void);
 void Create_Screen(void);
 void Create_Game_Screen(void);
 void Draw_Buttons(void);
+void Check_End_Game(void);
 void Update_Bubble(void);
 void New_Game(void);
 void Undo_Move(void);
