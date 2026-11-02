@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+- Restored the original rightward column compaction and Shifter/MegaShift behavior.
+- Continuous and MegaShift modes now refill empty columns from the left as in the original game.
+- New games reset the active score, the animation setting is respected, and games end when no matching bubbles remain.
+- Ended games update game counts without recording an unfinished score as a completed-game high score.
+
 ## [1.1.0] - 2026-10-02
 
 ### Added
@@ -23,8 +31,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - **Bonus Calculation**: Now matches original game logic exactly
-  - Normal/Shifter/Megashift: 0 bubbles=500, 1=200, 2=100, 3=50, 4=25, 5+=0
-  - Continuous: No bonus (endless mode)
+  - Normal/Shifter: 0 bubbles=500, 1=200, 2=100, 3=50, 4=25, 5+=0
+  - Continuous/MegaShift: No bonus
   - Previously only gave 1000 for 0 bubbles, 0 otherwise
 
 - **Animation Speed**: Matched original 40 FPS timer behavior

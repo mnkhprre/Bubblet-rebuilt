@@ -97,6 +97,7 @@ void Create_Screen(void);
 void Create_Game_Screen(void);
 void Draw_Buttons(void);
 void Update_Bubble(void);
+void Check_End_Game(void);
 void New_Game(void);
 void Undo_Move(void);
 void Save_Config(void);

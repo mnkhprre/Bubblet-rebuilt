@@ -29,7 +29,10 @@ int main(int argc, char* argv[]) {
         
         // 1.5 Update Animations
         Update_Animations(0.033f); // 33ms delta time at 30 FPS
-        
+        if (waitanim_0 && !animations_active) {
+            Check_End_Game();
+        }
+
         // 2. Render to Backbuffer
         Create_Screen();
         
