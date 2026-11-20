@@ -1,0 +1,3 @@
+#include "bubblet_resource.h"
+
+IDI_BUBBLET_ICON ICON "bubblet_bmps/Icon Entry_1.ico"
