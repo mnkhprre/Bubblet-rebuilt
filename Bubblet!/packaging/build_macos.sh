@@ -35,6 +35,8 @@ SDL3="$(ls "$BREW"/lib/libSDL3.0.dylib 2>/dev/null || true)"
 if [ -n "$SDL3" ]; then
   cp "$SDL3" "$APP/Contents/Frameworks/"
   chmod u+w "$APP/Contents/Frameworks/libSDL3.0.dylib"
+  install_name_tool -id @executable_path/../Frameworks/libSDL3.0.dylib \
+    "$APP/Contents/Frameworks/libSDL3.0.dylib"
   # No -od here: that would wipe the Frameworks folder filled above.
   dylibbundler -b \
     -x "$APP/Contents/Frameworks/libSDL3.0.dylib" \
