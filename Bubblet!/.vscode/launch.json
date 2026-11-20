@@ -2,20 +2,16 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "type": "lldb",
+      "name": "Debug Bubblet (Microsoft cppdbg)",
+      "type": "cppdbg",
       "request": "launch",
-      "name": "Launch",
-      "program": "${workspaceFolder}/<>",
+      "program": "${workspaceFolder}/functions/build/Debug/outDebug",
       "args": [],
-      "cwd": "${workspaceFolder}"
-    },
-    {
-      "name": "C/C++ Runner: Debug Session",
-      "type": "lldb",
-      "request": "launch",
-      "args": [],
-      "cwd": "/Users/mustafabilgin/Desktop/Bubblet!/functions",
-      "program": "/Users/mustafabilgin/Desktop/Bubblet!/functions/build/Debug/outDebug"
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}/functions",
+      "environment": [],
+      "externalConsole": false,
+      "MIMode": "lldb"
     }
   ]
 }
