@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Per-user install (no admin prompt) with Start Menu/desktop shortcuts and an uninstaller.
   - The game switches to its own folder on start, so assets and `bubblet.cfg` are found however it is launched.
 - **macOS and Debian packages built by GitHub Actions** (`.github/workflows/release-packages.yml`), attached to each release.
-  - macOS: self-contained `Bubblet.app` (SDL libraries bundled, ad-hoc signed) in a drag-to-Applications DMG.
+  - macOS: self-contained universal `Bubblet.app` (Apple Silicon + Intel) (SDL libraries bundled, ad-hoc signed) in a drag-to-Applications DMG.
   - Debian/Ubuntu: `bubblet_<version>_amd64.deb` with a menu entry, icon and `bubblet` command; settings are saved per user in `~/.local/share/bubblet`.
 
 ### Fixed
