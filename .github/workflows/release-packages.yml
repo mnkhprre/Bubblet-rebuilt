@@ -26,12 +26,12 @@ env:
 jobs:
   macos:
     name: macOS DMG (Apple Silicon)
-    runs-on: macos-14
+    runs-on: macos-15
     defaults:
       run:
         working-directory: "Bubblet!"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Install dependencies
         run: brew install sdl2 sdl2_mixer sdl2_ttf dylibbundler
       - name: Build DMG
@@ -42,7 +42,7 @@ jobs:
           sleep 8
           pgrep -x bubblet_mac
           pkill -x bubblet_mac || true
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: macos-dmg
           path: "Bubblet!/dist/*.dmg"
@@ -73,7 +73,7 @@ jobs:
           echo "deb [signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
             > /etc/apt/sources.list.d/github-cli.list
           apt-get update && apt-get install -y gh
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Build .deb
         run: bash packaging/build_deb.sh "$(bash packaging/version.sh)"
       - name: Check package
@@ -85,7 +85,7 @@ jobs:
           DEBIAN_FRONTEND=noninteractive apt-get install -y ./dist/*.deb
           test -x /usr/games/bubblet
           ldd /usr/lib/bubblet/bubblet | (! grep "not found")
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: debian-deb
           path: "Bubblet!/dist/*.deb"
