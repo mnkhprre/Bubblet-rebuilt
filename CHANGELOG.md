@@ -13,12 +13,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Windows support**: native SDL2 build (`Makefile.windows`) and an NSIS installer (`Bubblet-1.2.0-Setup.exe`).
   - Per-user install (no admin prompt) with Start Menu/desktop shortcuts and an uninstaller.
   - The game switches to its own folder on start, so assets and `bubblet.cfg` are found however it is launched.
+- **macOS and Debian packages built by GitHub Actions** (`.github/workflows/release-packages.yml`), attached to each release.
+  - macOS: self-contained `Bubblet.app` (SDL libraries bundled, ad-hoc signed) in a drag-to-Applications DMG.
+  - Debian/Ubuntu: `bubblet_<version>_amd64.deb` with a menu entry, icon and `bubblet` command; settings are saved per user in `~/.local/share/bubblet`.
 
 ### Fixed
 - Restored the original rightward column compaction and Shifter/MegaShift behavior.
 - Continuous and MegaShift modes now refill empty columns from the left as in the original game.
 - New games reset the active score, the animation setting is respected, and games end when no matching bubbles remain.
 - Ended games update game counts without recording an unfinished score as a completed-game high score.
+- Linux: games now end when no matching bubbles remain (the end-of-game check was missing from the Linux main loop).
 
 ## [1.1.0] - 2026-10-02
 
