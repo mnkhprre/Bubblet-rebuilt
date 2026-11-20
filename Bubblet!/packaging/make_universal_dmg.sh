@@ -20,6 +20,7 @@ merge() {
   local rel="$1" a="$ARM/$1" x="$X86/$1" dst="$APP/$1"
   if [ -f "$a" ] && [ -f "$x" ]; then
     lipo -create "$a" "$x" -output "$dst"
+    echo "$dst" >> dist/universal/merged.txt
   elif [ -f "$x" ]; then
     mkdir -p "$(dirname "$dst")"; cp "$x" "$dst"
     echo "note: $rel only exists in the x86_64 build"
@@ -44,15 +45,18 @@ MIN="$(printf '%s\n%s\n' "$ARM_MIN" "$X86_MIN" | sort -V | tail -1)"
 codesign --force --deep --sign - "$APP"
 codesign --verify --deep --strict "$APP"
 
-# Every binary must now contain both architectures.
+# Files present in both builds must now hold both architectures. Files that
+# exist in only one build (Homebrew can ship different versions per arch)
+# are only loaded by that architecture's slice, so they stay single-arch.
 bad=0
 while read -r f; do
-  if file -b "$f" | grep -q "Mach-O"; then
-    archs="$(lipo -archs "$f")"
-    case "$archs" in *arm64*x86_64*|*x86_64*arm64*) ;; *) echo "ERROR: $f is only $archs" >&2; bad=1 ;; esac
-  fi
-done < <(find "$APP" -type f)
+  archs="$(lipo -archs "$f")"
+  case "$archs" in *arm64*x86_64*|*x86_64*arm64*) ;; *) echo "ERROR: $f is only $archs" >&2; bad=1 ;; esac
+done < dist/universal/merged.txt
 [ "$bad" = 0 ]
+# The main binary must be universal.
+lipo -archs "$APP/Contents/MacOS/bubblet_mac" | grep -q arm64
+lipo -archs "$APP/Contents/MacOS/bubblet_mac" | grep -q x86_64
 
 STAGE="dist/universal/dmg"
 mkdir -p "$STAGE"
