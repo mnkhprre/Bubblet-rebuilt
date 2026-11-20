@@ -11,7 +11,7 @@ Get the latest version from the **[Releases page](https://github.com/mnkhprre/Bu
 | Platform | File | How to install |
 |---|---|---|
 | Windows 10/11 (64-bit) | `Bubblet-<version>-Setup.exe` | Run the installer. No admin rights needed. |
-| macOS (Apple Silicon) | `Bubblet-<version>-macOS-arm64.dmg` | Open the DMG and drag **Bubblet** into **Applications**. |
+| macOS (Apple Silicon and Intel) | `Bubblet-<version>-macOS-universal.dmg` | Open the DMG and drag **Bubblet** into **Applications**. |
 | Debian / Ubuntu (amd64) | `bubblet_<version>_amd64.deb` | `sudo apt install ./bubblet_<version>_amd64.deb`, then start it from the app menu or run `bubblet`. |
 
 The builds are not signed by Microsoft or Apple, so the first launch shows a warning:

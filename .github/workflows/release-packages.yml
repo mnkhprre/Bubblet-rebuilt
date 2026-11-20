@@ -24,9 +24,16 @@ env:
   TAG: ${{ github.event.release.tag_name || inputs.tag }}
 
 jobs:
-  macos:
-    name: macOS DMG (Apple Silicon)
-    runs-on: macos-15
+  macos-app:
+    name: macOS app (${{ matrix.arch }})
+    strategy:
+      matrix:
+        include:
+          - arch: arm64
+            runner: macos-15
+          - arch: x86_64
+            runner: macos-15-intel
+    runs-on: ${{ matrix.runner }}
     defaults:
       run:
         working-directory: "Bubblet!"
@@ -34,11 +41,45 @@ jobs:
       - uses: actions/checkout@v5
       - name: Install dependencies
         run: brew install sdl2 sdl2_mixer sdl2_ttf dylibbundler
-      - name: Build DMG
+      - name: Build app
         run: bash packaging/build_macos.sh "$(bash packaging/version.sh)"
       - name: Smoke test (app starts and stays up)
         run: |
           open -n dist/mac/Bubblet.app
+          sleep 8
+          pgrep -x bubblet_mac
+          pkill -x bubblet_mac || true
+      - name: Pack app
+        run: tar -czf "dist/Bubblet-${{ matrix.arch }}.app.tgz" -C dist/mac Bubblet.app
+      - uses: actions/upload-artifact@v5
+        with:
+          name: macos-app-${{ matrix.arch }}
+          path: "Bubblet!/dist/Bubblet-${{ matrix.arch }}.app.tgz"
+
+  macos:
+    name: macOS DMG (Universal)
+    needs: macos-app
+    runs-on: macos-15
+    defaults:
+      run:
+        working-directory: "Bubblet!"
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/download-artifact@v5
+        with:
+          pattern: macos-app-*
+          path: "Bubblet!/dist/in"
+          merge-multiple: true
+      - name: Unpack apps
+        run: |
+          mkdir -p dist/arm64 dist/x86_64
+          tar -xzf dist/in/Bubblet-arm64.app.tgz -C dist/arm64
+          tar -xzf dist/in/Bubblet-x86_64.app.tgz -C dist/x86_64
+      - name: Build universal DMG
+        run: bash packaging/make_universal_dmg.sh "$(bash packaging/version.sh)" dist/arm64/Bubblet.app dist/x86_64/Bubblet.app
+      - name: Smoke test (universal app starts)
+        run: |
+          open -n dist/universal/Bubblet.app
           sleep 8
           pgrep -x bubblet_mac
           pkill -x bubblet_mac || true
