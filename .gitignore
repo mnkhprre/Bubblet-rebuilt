@@ -13,3 +13,6 @@ bubblet_mac
 # Build directories
 build/
 dist/
+# Windows build output
+Bubblet!/Bubblet.exe
+*.win.o
