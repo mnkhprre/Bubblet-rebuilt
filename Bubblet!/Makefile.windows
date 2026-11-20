@@ -1,0 +1,53 @@
+# Makefile for Bubblet! Rebuilt (Windows/SDL2 Port)
+# Build from an MSYS2 UCRT64 shell with:
+#   pacman -S mingw-w64-ucrt-x86_64-{gcc,SDL2,SDL2_mixer,SDL2_ttf,curl,nsis} make
+#   make -f Makefile.windows installer
+
+CC = gcc
+WINDRES = windres
+CFLAGS = -Wall -O2 -DBUBBLET_SDL $(shell pkg-config --cflags sdl2 SDL2_mixer SDL2_ttf libcurl) -I.
+LDFLAGS = -mwindows $(shell pkg-config --libs sdl2 SDL2_mixer SDL2_ttf libcurl) -lm
+
+TARGET = Bubblet.exe
+DIST = dist/windows
+
+SRCS = bubblet_main_windows.c \
+       bubblet_globals.c \
+       bubblet_sdl_windows.c \
+       bubblet_init.c \
+       bubblet_input.c \
+       bubblet_logic.c \
+       bubblet_sound.c \
+       bubblet_ui.c \
+       bubblet_update.c
+
+OBJS = $(SRCS:.c=.win.o) bubblet_windows_res.win.o
+
+all: $(TARGET)
+
+$(TARGET): $(OBJS)
+	$(CC) -o $@ $(OBJS) $(LDFLAGS)
+
+%.win.o: %.c bubblet_types.h bubblet_globals.h
+	$(CC) $(CFLAGS) -c $< -o $@
+
+bubblet_windows_res.win.o: bubblet_windows.rc bubblet.ico
+	$(WINDRES) $< -o $@
+
+# Stage exe + assets + every non-system DLL the exe depends on
+dist: $(TARGET)
+	rm -rf $(DIST)
+	mkdir -p $(DIST)
+	cp $(TARGET) $(DIST)/
+	cp -r bubblet_bmps $(DIST)/
+	cp *.wav cursor.bmp Readme.txt $(DIST)/
+	ldd $(TARGET) | grep -i '/ucrt64/' | awk '{print $$3}' | sort -u | xargs -I{} cp {} $(DIST)/
+
+installer: dist
+	makensis -NOCD installer/bubblet.nsi
+
+clean:
+	rm -f $(OBJS) $(TARGET)
+	rm -rf $(DIST)
+
+.PHONY: all dist installer clean

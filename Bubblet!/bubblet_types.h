@@ -5,7 +5,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(BUBBLET_SDL)
 #include <windows.h>
 #include <ddraw.h>
 typedef LPDIRECTDRAWSURFACE SurfaceHandle;
@@ -15,11 +15,18 @@ typedef HWND WindowHandle;
 #include <SDL2/SDL_mixer.h>
 typedef SDL_Texture* SurfaceHandle;
 typedef SDL_Window* WindowHandle;
+#ifdef _WIN32
+// Windows SDL build: libcurl pulls in <windows.h>, so take BOOL/TRUE/FALSE/
+// RGB/COLORREF from there instead of redefining them.
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#else
 #define BOOL int
 #define TRUE 1
 #define FALSE 0
 #define RGB(r,g,b) ((uint32_t)(((uint8_t)(r)|((uint16_t)((uint8_t)(g))<<8))|(((uint32_t)(uint8_t)(b))<<16)))
 typedef uint32_t COLORREF;
+#endif
 #endif
 
 // Game Modes

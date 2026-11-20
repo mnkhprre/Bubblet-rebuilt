@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-11-20
+
+### Added
+- **Windows support**: native SDL2 build (`Makefile.windows`) and an NSIS installer (`Bubblet-1.2.0-Setup.exe`).
+  - Per-user install (no admin prompt) with Start Menu/desktop shortcuts and an uninstaller.
+  - The game switches to its own folder on start, so assets and `bubblet.cfg` are found however it is launched.
+
 ### Fixed
 - Restored the original rightward column compaction and Shifter/MegaShift behavior.
 - Continuous and MegaShift modes now refill empty columns from the left as in the original game.
