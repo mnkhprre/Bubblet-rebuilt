@@ -43,12 +43,10 @@ jobs:
         run: brew install sdl2 sdl2_mixer sdl2_ttf dylibbundler
       - name: Build app
         run: bash packaging/build_macos.sh "$(bash packaging/version.sh)"
-      - name: Smoke test (app starts and stays up)
+      - name: Smoke test (game starts using only bundled libraries)
         run: |
-          open -n dist/mac/Bubblet.app
-          sleep 8
-          pgrep -x bubblet_mac
-          pkill -x bubblet_mac || true
+          brew unlink sdl3
+          bash packaging/smoke_test_macos.sh dist/mac/Bubblet.app
       - name: Pack app
         run: tar -czf "dist/Bubblet-${{ matrix.arch }}.app.tgz" -C dist/mac Bubblet.app
       - uses: actions/upload-artifact@v5
@@ -77,12 +75,8 @@ jobs:
           tar -xzf dist/in/Bubblet-x86_64.app.tgz -C dist/x86_64
       - name: Build universal DMG
         run: bash packaging/make_universal_dmg.sh "$(bash packaging/version.sh)" dist/arm64/Bubblet.app dist/x86_64/Bubblet.app
-      - name: Smoke test (universal app starts)
-        run: |
-          open -n dist/universal/Bubblet.app
-          sleep 8
-          pgrep -x bubblet_mac
-          pkill -x bubblet_mac || true
+      - name: Smoke test (universal app starts using only bundled libraries)
+        run: bash packaging/smoke_test_macos.sh dist/universal/Bubblet.app
       - uses: actions/upload-artifact@v5
         with:
           name: macos-dmg
