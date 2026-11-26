@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.1] - 2026-11-26
+
+### Fixed
+- **macOS**: the game no longer stops with "Fatal error! Cannot continue! Failed loading SDL3 library." on Macs without Homebrew. The app now bundles SDL3 under the name sdl2-compat looks for (`libSDL3.dylib`).
+- **Linux**: animations follow the real frame time and run at the original 40 FPS, and the game shuts down cleanly when its window is closed or start-up fails.
+
+### Changed
+- The macOS CI test now checks that the game actually finishes starting up using only its bundled libraries, instead of only checking that the process exists.
+
 ## [1.2.0] - 2026-11-20
 
 ### Added

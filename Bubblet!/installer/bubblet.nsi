@@ -9,7 +9,7 @@ Unicode true
 
 !define APPNAME     "Bubblet! Rebuilt"
 !define APPEXE      "Bubblet.exe"
-!define VERSION     "1.2.0"
+!define VERSION     "1.2.1"
 !define PUBLISHER   "mnkhprre"
 !define URL         "https://github.com/mnkhprre/Bubblet-rebuilt"
 !define UNINSTKEY   "Software\Microsoft\Windows\CurrentVersion\Uninstall\BubbletRebuilt"
