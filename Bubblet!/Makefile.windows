@@ -41,7 +41,12 @@ dist: $(TARGET)
 	cp $(TARGET) $(DIST)/
 	cp -r bubblet_bmps $(DIST)/
 	cp *.wav cursor.bmp Readme.txt $(DIST)/
-	ldd $(TARGET) | grep -i '/ucrt64/' | awk '{print $$3}' | sort -u | xargs -I{} cp {} $(DIST)/
+	# ldd may resolve DLLs from MSYS2 or from this folder (the repo ships
+	# copies next to the exe); take every one that isn't part of Windows.
+	ldd $(TARGET) | awk '{print $$3}' | grep -iv '^/c/windows/' | grep -i '\.dll$$' \
+	  | sort -u | xargs -I{} cp {} $(DIST)/
+	@n=$$(ls $(DIST)/*.dll 2>/dev/null | wc -l); echo "Bundled $$n DLLs"; \
+	  test $$n -gt 0 || { echo "ERROR: no DLLs bundled" >&2; exit 1; }
 
 installer: dist
 	makensis -NOCD installer/bubblet.nsi
