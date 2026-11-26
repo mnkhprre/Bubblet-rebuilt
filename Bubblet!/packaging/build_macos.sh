@@ -33,13 +33,16 @@ dylibbundler -od -b -cd \
   -d "$APP/Contents/Frameworks/" -p @executable_path/../Frameworks/
 SDL3="$(ls "$BREW"/lib/libSDL3.0.dylib 2>/dev/null || true)"
 if [ -n "$SDL3" ]; then
-  cp "$SDL3" "$APP/Contents/Frameworks/"
-  chmod u+w "$APP/Contents/Frameworks/libSDL3.0.dylib"
-  install_name_tool -id @executable_path/../Frameworks/libSDL3.0.dylib \
-    "$APP/Contents/Frameworks/libSDL3.0.dylib"
+  # sdl2-compat dlopen()s SDL3 by the name "libSDL3.dylib" (first from
+  # @loader_path, i.e. this Frameworks folder), never "libSDL3.0.dylib",
+  # so the bundled copy must carry exactly that name.
+  SDL3_DST="$APP/Contents/Frameworks/libSDL3.dylib"
+  cp "$SDL3" "$SDL3_DST"
+  chmod u+w "$SDL3_DST"
+  install_name_tool -id @executable_path/../Frameworks/libSDL3.dylib "$SDL3_DST"
   # No -od here: that would wipe the Frameworks folder filled above.
   dylibbundler -b \
-    -x "$APP/Contents/Frameworks/libSDL3.0.dylib" \
+    -x "$SDL3_DST" \
     -d "$APP/Contents/Frameworks/" -p @executable_path/../Frameworks/
 fi
 
